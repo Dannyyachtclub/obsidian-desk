@@ -130,7 +130,7 @@
       #actView .fh-row:first-child { animation: actIn 0.35s ease; background: rgba(157,107,255,0.07); border-radius: 6px; }
       @keyframes actIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
       @media (prefers-reduced-motion: reduce) {
-        .bing-pop, #actView .fh-row:first-child { animation: none !important; }
+        .bing-pop, #actView .fh-row:first-child, #awFindings .fh-row:first-child { animation: none !important; }
       }
 
       /* ---------- controls ---------- */
@@ -232,6 +232,13 @@
       .cruc-row { border: 1px solid var(--line-soft); border-radius: 10px; background: rgba(8,4,18,0.6); padding: 8px 10px; margin-bottom: 6px; }
       .absent-box { border: 1px dashed rgba(255,176,32,0.55); border-radius: 10px; padding: 9px 11px; color: var(--gold); font-size: 12px; margin-top: 8px; background: rgba(255,176,32,0.05); }
 
+      /* ---------- awareness tab ---------- */
+      #awFindings .fh-row:first-child { animation: actIn 0.35s ease; background: rgba(157,107,255,0.07); border-radius: 6px; }
+      .nc-grid { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 8px; }
+      @media (min-width: 560px) { .nc-grid { grid-template-columns: repeat(3, 1fr); } }
+      .nc-tile { border: 1px dashed rgba(255,77,109,0.4); border-radius: 10px; padding: 9px 11px; background: rgba(255,77,109,0.04); }
+      .nc-name { font-weight: 800; font-size: 12px; letter-spacing: 0.06em; margin-bottom: 5px; }
+
       /* ---------- desks / positions ---------- */
       .desk-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
       @media (min-width: 560px) { .desk-grid { grid-template-columns: 1fr 1fr; } }
@@ -258,10 +265,52 @@
         border: 1px solid var(--line); border-radius: 999px; padding: 5px;
         box-shadow: 0 18px 40px rgba(0,0,0,0.65); max-width: 560px; margin: 0 auto;
       }
-      .tabbar button { flex: 1; min-height: 2.9rem; border-radius: 999px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 10px; font-weight: 800; letter-spacing: 0.16em; color: var(--dim); transition: background .18s ease, color .18s ease; }
+      .tabbar button { flex: 1; min-width: 0; min-height: 2.9rem; border-radius: 999px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-size: 9px; font-weight: 800; letter-spacing: 0.1em; white-space: nowrap; color: var(--dim); transition: background .18s ease, color .18s ease; }
       .tabbar button[aria-selected="true"] { color: #fff; background: linear-gradient(90deg, var(--violet-deep), var(--violet)); box-shadow: 0 8px 22px rgba(109,40,217,0.5); }
       .tabbar .glyph { font-size: 15px; line-height: 1; font-family: "JetBrains Mono", monospace; }
       .tabbar [data-tab="live"] .glyph { display: inline-block; animation: pulseDot 1.6s ease-in-out infinite; }
+
+      /* ---------- money banner (top of the desk) ---------- */
+      .win-banner { position: relative; overflow: hidden; padding: 13px 14px 12px; margin-bottom: 10px;
+        border: 1px solid rgba(255,176,32,0.5); border-radius: var(--radius);
+        background: linear-gradient(150deg, rgba(74,50,4,0.6), rgba(14,44,26,0.42) 46%, var(--panel2) 82%);
+        box-shadow: 0 22px 48px rgba(0,0,0,0.62), 0 0 36px rgba(255,176,32,0.16), 0 0 22px rgba(45,255,159,0.10), inset 0 1px 0 rgba(255,214,110,0.28); }
+      .win-banner::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+        background: linear-gradient(105deg, transparent 30%, rgba(255,226,150,0.14) 48%, transparent 62%);
+        transform: translateX(-110%); animation: wbSheen 5.5s ease-in-out infinite; }
+      @keyframes wbSheen { 0%, 55% { transform: translateX(-110%); } 85%, 100% { transform: translateX(110%); } }
+      .win-banner > * { position: relative; z-index: 1; }
+      .wb-head { display: flex; align-items: center; gap: 8px; }
+      .wb-scope { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 9.5px; font-weight: 800; letter-spacing: 0.12em; color: var(--gold); border: 1px solid rgba(255,176,32,0.5); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+      .wb-main { display: flex; align-items: flex-end; gap: 14px; margin-top: 6px; flex-wrap: wrap; }
+      .wb-big { font-family: "JetBrains Mono", monospace; font-weight: 800; font-size: clamp(36px, 10vw, 48px); line-height: 1; letter-spacing: -0.02em; color: var(--green); text-shadow: 0 0 26px rgba(45,255,159,0.45); }
+      .wb-side { display: flex; gap: 8px; margin-left: auto; }
+      .wb-cell { border: 1px solid rgba(255,176,32,0.28); border-radius: 10px; background: rgba(8,4,18,0.6); padding: 6px 10px 5px; }
+      .wb-stat { font-family: "JetBrains Mono", monospace; font-weight: 800; font-size: 17px; line-height: 1.15; }
+      .wb-latest { margin-top: 10px; border-top: 1px solid rgba(255,176,32,0.22); padding-top: 8px; font-size: 12.5px; color: var(--bone-dim); font-family: "JetBrains Mono", monospace; overflow-wrap: anywhere; }
+      .wb-money { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+      .wb-money span { position: absolute; bottom: -10px; font-family: "JetBrains Mono", monospace; font-weight: 800; opacity: 0; animation: moneyRise 1.9s ease-out forwards; text-shadow: 0 0 12px currentColor; }
+      @keyframes moneyRise { 0% { transform: translateY(0) rotate(-8deg); opacity: 0; } 14% { opacity: 1; } 100% { transform: translateY(-150px) rotate(10deg); opacity: 0; } }
+
+      /* ---------- dropdown filter menus ---------- */
+      .filter-row { display: flex; gap: 8px; margin-top: 10px; }
+      .filter-field { flex: 1; min-width: 0; display: block; }
+      .filter-field .fig-label { display: block; margin-bottom: 4px; }
+      .filter-menu { width: 100%; min-height: 2.4rem; background-color: rgba(8,4,18,0.9); color: var(--bone);
+        border: 1px solid var(--line); border-radius: 10px; font-family: "JetBrains Mono", monospace;
+        font-size: 12px; font-weight: 700; letter-spacing: 0.04em; padding: 8px 30px 8px 10px;
+        appearance: none; -webkit-appearance: none;
+        background-image: linear-gradient(45deg, transparent 50%, var(--violet) 50%), linear-gradient(135deg, var(--violet) 50%, transparent 50%);
+        background-position: calc(100% - 17px) 55%, calc(100% - 12px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
+      .filter-menu:focus { outline: 2px solid rgba(157,107,255,0.55); outline-offset: 1px; }
+
+      /* ---------- collapsible symbol picks ---------- */
+      .picks-fold { margin-top: 10px; border: 1px solid var(--line-soft); border-radius: 10px; background: rgba(8,4,18,0.55); }
+      .picks-fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 2.4rem; padding: 8px 11px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.2em; color: var(--dim); }
+      .picks-fold > summary::-webkit-details-marker { display: none; }
+      .picks-fold > summary::after { content: "▾"; margin-left: auto; color: var(--violet); font-size: 14px; transition: transform .18s ease; }
+      .picks-fold[open] > summary::after { transform: rotate(180deg); }
+      .picks-fold .fold-body { padding: 0 11px 11px; }
 
       .sec-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
       .sec-title { font-size: 12px; font-weight: 900; letter-spacing: 0.2em; color: var(--bone); }
@@ -285,7 +334,7 @@
       }
       .bottom-strip .bv { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       @media (prefers-reduced-motion: reduce) {
-        .ticker-track, .tabbar [data-tab="live"] .glyph, .live-pill[data-state="live"] .live-dot, .why-banner, .fx-flash, .eq span, .prox-row.hot .bar-fill, .gate-step + .gate-step::before, .pip.prog { animation: none !important; }
+        .ticker-track, .tabbar [data-tab="live"] .glyph, .live-pill[data-state="live"] .live-dot, .why-banner, .fx-flash, .eq span, .prox-row.hot .bar-fill, .gate-step + .gate-step::before, .pip.prog, .win-banner::after, .wb-money span, .picks-fold > summary::after { animation: none !important; }
       }
     </style>
   </head>
@@ -308,6 +357,26 @@
           <span class="cmd-clock" id="utcClock">--:--:-- UTC</span>
         </div>
       </header>
+
+      <!-- ============ MONEY BANNER · THE TOP OF THE DESK ============ -->
+      <section class="panel win-banner" id="winBanner" aria-label="Money banner — winning closes banked, the win record, and the position nearest its take-profit, all from the live payload">
+        <div class="wb-money" id="wbMoney" aria-hidden="true"></div>
+        <div class="wb-head">
+          <span class="fig-label" style="color:var(--gold);">$ TAKE-PROFITS BANKED $</span>
+          <span class="wb-scope" id="wbScope">WHOLE SYSTEM</span>
+        </div>
+        <div class="wb-main">
+          <div>
+            <div class="wb-big" id="wbBig">—</div>
+            <div class="fig-label" style="margin-top:3px;">WINNING CLOSES · AFTER FEES</div>
+          </div>
+          <div class="wb-side">
+            <div class="wb-cell"><div class="fig-label">WINS BANKED</div><div class="wb-stat pos" id="wbWins">—</div></div>
+            <div class="wb-cell"><div class="fig-label">WIN RATE</div><div class="wb-stat" id="wbRate">—</div></div>
+          </div>
+        </div>
+        <div class="wb-latest" id="wbLatest">NEAREST THE MONEY · reading the live book…</div>
+      </section>
 
       <!-- ============ HERO · WHOLE SYSTEM BALANCE ============ -->
       <section class="panel hero" aria-label="Whole system balance — switch between wallet categories">
@@ -364,19 +433,21 @@
           <div class="ticker-track" id="tickerTrack"></div>
         </div>
         <div class="dim" style="font-size:10px; font-family:'JetBrains Mono',monospace;">ROLLING SLOW · DRAG TO HOLD &amp; READ · LET GO AND IT ROLLS AGAIN</div>
-        <div class="rowlabel" style="margin-top:8px;">FILTER · EVENT TYPE</div>
-        <div class="chiprow" id="evTypeChips" role="group" aria-label="Filter the activity stream by event type">
-          <button class="chip" data-evt="all" aria-pressed="true">ALL EVENTS</button>
-          <button class="chip" data-evt="fill" aria-pressed="false">FILLS</button>
-          <button class="chip" data-evt="exit" aria-pressed="false">TP + EXITS</button>
-          <button class="chip" data-evt="veto" aria-pressed="false">VETOES</button>
-          <button class="chip" data-evt="quote" aria-pressed="false">QUOTES</button>
-        </div>
-        <div class="rowlabel">FILTER · DESK</div>
-        <div class="chiprow" id="evDeskChips" role="group" aria-label="Filter the activity stream by desk">
-          <button class="chip" data-evd="all" aria-pressed="true">ALL DESKS</button>
-          <button class="chip" data-evd="TD-001" aria-pressed="false">TD-001</button>
-          <button class="chip" data-evd="TD-034" aria-pressed="false">TD-034</button>
+        <div class="filter-row" role="group" aria-label="Filter the activity stream">
+          <label class="filter-field"><span class="fig-label">FILTER · EVENT TYPE</span>
+            <select class="filter-menu" id="evTypeMenu" aria-label="Filter the activity stream by event type">
+              <option value="all" selected>ALL EVENTS</option>
+              <option value="fill">FILLS</option>
+              <option value="exit">TP + EXITS</option>
+              <option value="veto">VETOES</option>
+              <option value="quote">QUOTES</option>
+            </select></label>
+          <label class="filter-field"><span class="fig-label">FILTER · DESK</span>
+            <select class="filter-menu" id="evDeskMenu" aria-label="Filter the activity stream by desk">
+              <option value="all" selected>ALL DESKS</option>
+              <option value="TD-001">TD-001</option>
+              <option value="TD-034">TD-034</option>
+            </select></label>
         </div>
         <div id="actView" style="margin-top:2px;"></div>
       </section>
@@ -427,10 +498,15 @@
             <datalist id="symList"></datalist>
           </div>
 
-          <div class="rowlabel">QUICK PICKS</div>
-          <div class="chiprow" id="majorChips" role="group" aria-label="Major symbols"></div>
-          <div class="rowlabel">HOLDINGS · CLOSEST TO TAKE-PROFIT FIRST</div>
-          <div class="chiprow" id="holdChips" role="group" aria-label="Open positions — tap to put on the stage"></div>
+          <details class="picks-fold">
+            <summary>QUICK PICKS &amp; HOLDINGS · TAP TO OPEN</summary>
+            <div class="fold-body">
+              <div class="rowlabel" style="margin-top:0;">QUICK PICKS</div>
+              <div class="chiprow" id="majorChips" role="group" aria-label="Major symbols"></div>
+              <div class="rowlabel">HOLDINGS · CLOSEST TO TAKE-PROFIT FIRST</div>
+              <div class="chiprow" id="holdChips" role="group" aria-label="Open positions — tap to put on the stage"></div>
+            </div>
+          </details>
 
           <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:12px;">
             <span class="chiprow" id="tfChips" role="group" aria-label="Candle timeframe"></span>
@@ -492,11 +568,14 @@
       <!-- ============ DESKS TAB ============ -->
       <div class="tabblock" data-tabblock="desks" hidden>
         <p class="bonedim" style="margin:2px 2px 10px; font-size:12.5px;">Every desk on the system, from the desk snapshot <span class="mono" id="deskSnapWhen">—</span> · paper money.</p>
-        <div class="chiprow" id="deskViewChips" role="group" aria-label="Filter the desk list" style="margin-bottom:10px;">
-          <button class="chip" data-dview="all" aria-pressed="true">ALL DESKS</button>
-          <button class="chip" data-dview="win" aria-pressed="false">WINNING</button>
-          <button class="chip" data-dview="lose" aria-pressed="false">LOSING</button>
-          <button class="chip" data-dview="live" aria-pressed="false">FEED LIVE</button>
+        <div class="filter-row" role="group" aria-label="Filter the desk list" style="margin:0 0 10px;">
+          <label class="filter-field"><span class="fig-label">FILTER · SHOW</span>
+            <select class="filter-menu" id="deskViewMenu" aria-label="Filter the desk list">
+              <option value="all" selected>ALL DESKS</option>
+              <option value="win">WINNING</option>
+              <option value="lose">LOSING</option>
+              <option value="live">FEED LIVE</option>
+            </select></label>
         </div>
         <div class="desk-grid" id="deskGrid"></div>
       </div>
@@ -508,17 +587,19 @@
           <span class="dim" id="posSummary" style="font-size:11px;"></span>
         </div>
         <input class="sym-search" id="posFilter" type="search" placeholder="Filter positions — e.g. BTC, SOL, XAU…" aria-label="Filter open positions" style="margin:4px 0 10px;" />
-        <div class="rowlabel" style="margin-top:0;">FILTER · SIDE</div>
-        <div class="chiprow" id="posSideChips" role="group" aria-label="Filter positions by side" style="margin-bottom:8px;">
-          <button class="chip" data-pside="all" aria-pressed="true">ALL SIDES</button>
-          <button class="chip" data-pside="long" aria-pressed="false">LONG</button>
-          <button class="chip" data-pside="short" aria-pressed="false">SHORT</button>
-        </div>
-        <div class="rowlabel">FILTER · FLOATING RESULT</div>
-        <div class="chiprow" id="posPnlChips" role="group" aria-label="Filter positions by floating profit or loss" style="margin-bottom:10px;">
-          <button class="chip" data-ppnl="all" aria-pressed="true">ALL</button>
-          <button class="chip" data-ppnl="win" aria-pressed="false">WINNING</button>
-          <button class="chip" data-ppnl="lose" aria-pressed="false">LOSING</button>
+        <div class="filter-row" role="group" aria-label="Filter positions" style="margin:0 0 10px;">
+          <label class="filter-field"><span class="fig-label">FILTER · SIDE</span>
+            <select class="filter-menu" id="posSideMenu" aria-label="Filter positions by side">
+              <option value="all" selected>ALL SIDES</option>
+              <option value="long">LONG</option>
+              <option value="short">SHORT</option>
+            </select></label>
+          <label class="filter-field"><span class="fig-label">FILTER · FLOATING RESULT</span>
+            <select class="filter-menu" id="posPnlMenu" aria-label="Filter positions by floating profit or loss">
+              <option value="all" selected>ALL</option>
+              <option value="win">WINNING</option>
+              <option value="lose">LOSING</option>
+            </select></label>
         </div>
         <div id="posList"></div>
         <p class="dim" style="font-size:10.5px; margin:6px 2px 0;">Prices reprice live from the venue feed where it streams; rows marked SNAPSHOT sit on the snapshot's own marks. Tap a row to put it on the stage.</p>
@@ -558,6 +639,62 @@
           <div id="truthList" style="margin-top:6px;"></div>
           <p class="dim" style="font-size:10.5px; margin:8px 0 0;">Nothing compounds on an unproven number — the compounding board runs in SHADOW until a desk's truth factor is measured positive.</p>
         </section>
+
+        <section class="panel" style="padding:12px;" aria-label="Why the traders trade — each desk's own recorded reasons for its recent actions, and the overseers' open challenges">
+          <div class="sec-head"><span class="sec-title">WHY THE TRADERS TRADE</span><span class="dim" id="whyState" style="font-size:11px;"></span></div>
+          <p class="dim" style="font-size:11px; margin:5px 0 0;">Each desk's own recorded reasons for its recent actions — gate vetoes with their numbers, governor freezes, stand-downs, eligibility skips — printed verbatim from the records, plus the open challenges the overseer agents have put to them.</p>
+          <div id="whyAbsent"></div>
+          <div id="whyDesks" style="margin-top:8px;"></div>
+          <div class="rowlabel" id="whyChalLabel" style="display:none;">OPEN CHALLENGES FROM THE OVERSEERS</div>
+          <div id="whyChallenges"></div>
+        </section>
+      </div>
+
+      <!-- ============ AWARENESS TAB ============ -->
+      <div class="tabblock" data-tabblock="awareness" hidden>
+        <div class="sec-head" style="margin:2px 2px 4px;">
+          <span class="sec-title">AWARENESS · THE SYSTEM'S SENSES</span>
+        </div>
+        <p class="bonedim" style="margin:2px 2px 10px; font-size:12.5px;">What the desk is sensing: scout and social findings as they land, what the attention ranker promoted, the wallets it tracks, the events ahead and the predictions it has settled — read from the feed's awareness board, real intake only.</p>
+        <div id="awAbsent" style="margin-bottom:10px;"></div>
+
+        <section class="panel act-panel" aria-label="Scout and social findings stream — findings landing with their real timestamps">
+          <div class="sec-head">
+            <span class="sec-title">SCOUT / SOCIAL FINDINGS</span>
+            <span class="bing-pop" id="awBing" hidden>&#9834; BING</span>
+            <span class="dim" id="awFindState" style="margin-left:auto; font-size:11px;"></span>
+          </div>
+          <div id="awFindings" style="margin-top:4px;"></div>
+        </section>
+
+        <section class="panel" style="padding:12px; margin-bottom:10px;" aria-label="Attention ranker promotions">
+          <div class="sec-head"><span class="sec-title">ATTENTION RANKER · PROMOTIONS</span><span class="dim" id="awAttState" style="font-size:11px;"></span></div>
+          <div id="awAttention" style="margin-top:6px;"></div>
+        </section>
+
+        <section class="panel" style="padding:12px; margin-bottom:10px;" aria-label="Tracked and tagged wallets, and what was observed on them">
+          <div class="sec-head"><span class="sec-title">TRACKED &amp; TAGGED WALLETS</span><span class="dim" id="awWalState" style="font-size:11px;"></span></div>
+          <div id="awWallets" style="margin-top:6px;"></div>
+        </section>
+
+        <section class="panel" style="padding:12px; margin-bottom:10px;" aria-label="Upcoming events calendar with live countdowns">
+          <div class="sec-head"><span class="sec-title">UPCOMING EVENTS</span><span class="dim" id="awEvState" style="font-size:11px;"></span></div>
+          <div id="awEvents" style="margin-top:6px;"></div>
+        </section>
+
+        <section class="panel" style="padding:12px; margin-bottom:10px;" aria-label="Prediction resolutions">
+          <div class="sec-head"><span class="sec-title">PREDICTION RESOLUTIONS</span><span class="dim" id="awResState" style="font-size:11px;"></span></div>
+          <div id="awResolutions" style="margin-top:6px;"></div>
+        </section>
+
+        <section class="panel" style="padding:12px;" aria-label="Source classes the desk does not ingest — shown as not connected, never as a fake stream">
+          <div class="sec-head"><span class="sec-title">NOT CONNECTED · NO FAKE STREAMS</span></div>
+          <div class="nc-grid">
+            <div class="nc-tile"><div class="nc-name">GENERAL NEWS WIRES</div><span class="desk-state" style="color:var(--red);">NOT CONNECTED</span><p class="dim" style="margin:5px 0 0; font-size:11px;">The desk does not ingest general news wires, so no headlines are shown here.</p></div>
+            <div class="nc-tile"><div class="nc-name">WEATHER FEEDS</div><span class="desk-state" style="color:var(--red);">NOT CONNECTED</span><p class="dim" style="margin:5px 0 0; font-size:11px;">The desk does not ingest weather feeds, so no conditions are shown here.</p></div>
+            <div class="nc-tile"><div class="nc-name">POLITICAL FEEDS</div><span class="desk-state" style="color:var(--red);">NOT CONNECTED</span><p class="dim" style="margin:5px 0 0; font-size:11px;">The desk does not ingest political feeds, so no politics stream is shown here.</p></div>
+          </div>
+        </section>
       </div>
 
       <!-- ============ LOG TAB ============ -->
@@ -583,6 +720,7 @@
       <button role="tab" data-tab="live" aria-selected="true"><span class="glyph">◉</span>LIVE</button>
       <button role="tab" data-tab="desks" aria-selected="false"><span class="glyph">▦</span>DESKS</button>
       <button role="tab" data-tab="positions" aria-selected="false"><span class="glyph">▤</span>POSITIONS</button>
+      <button role="tab" data-tab="awareness" aria-selected="false"><span class="glyph">◎</span>AWARENESS</button>
       <button role="tab" data-tab="learned" aria-selected="false"><span class="glyph">✦</span>LEARNED</button>
       <button role="tab" data-tab="log" aria-selected="false"><span class="glyph">☰</span>LOG</button>
     </nav>
@@ -691,13 +829,7 @@
         $("deskGrid").innerHTML = html;
       }
       renderDesks();
-      Array.prototype.forEach.call($("deskViewChips").querySelectorAll("[data-dview]"), function (b) {
-        b.addEventListener("click", function () {
-          deskView = b.getAttribute("data-dview");
-          Array.prototype.forEach.call($("deskViewChips").querySelectorAll("[data-dview]"), function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
-          renderDesks();
-        });
-      });
+      $("deskViewMenu").addEventListener("change", function () { deskView = this.value; renderDesks(); });
 
       /* ---------------- event rows / ticker / log / firehose ---------------- */
       var KIND = { quote: ["QUOTE", "q"], veto: ["VETO", "v"], fill: ["FILL", "f"], exit_quote: ["EXIT", "x"], exit: ["EXIT", "x"] };
@@ -951,17 +1083,8 @@
         });
       }
       $("posFilter").addEventListener("input", applyPosFilters);
-      function posChipWire(id, attr, set) {
-        Array.prototype.forEach.call($(id).querySelectorAll("[" + attr + "]"), function (b) {
-          b.addEventListener("click", function () {
-            set(b.getAttribute(attr));
-            Array.prototype.forEach.call($(id).querySelectorAll("[" + attr + "]"), function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
-            applyPosFilters();
-          });
-        });
-      }
-      posChipWire("posSideChips", "data-pside", function (v) { posSide = v; });
-      posChipWire("posPnlChips", "data-ppnl", function (v) { posPnl = v; });
+      $("posSideMenu").addEventListener("change", function () { posSide = this.value; applyPosFilters(); });
+      $("posPnlMenu").addEventListener("change", function () { posPnl = this.value; applyPosFilters(); });
       function refreshPosRows() {
         Object.keys(posRefs).forEach(function (sym) {
           var r = posRefs[sym]; if (!r.last) return;
@@ -1017,19 +1140,11 @@
         fhDesc = fhSource(); fhIdx = 0; fhRows = []; fhRender(); fhTick(); fhTick();
         renderActivity(true);
       }
-      function evChipWire(id, attr, set) {
-        Array.prototype.forEach.call($(id).querySelectorAll("[" + attr + "]"), function (b) {
-          b.addEventListener("click", function () {
-            set(b.getAttribute(attr));
-            Array.prototype.forEach.call($(id).querySelectorAll("[" + attr + "]"), function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
-            applyEvFilters();
-          });
-        });
-      }
-      evChipWire("evTypeChips", "data-evt", function (v) { evType = v; });
-      evChipWire("evDeskChips", "data-evd", function (v) { evDesk = v; });
+      $("evTypeMenu").addEventListener("change", function () { evType = this.value; applyEvFilters(); });
+      $("evDeskMenu").addEventListener("change", function () { evDesk = this.value; applyEvFilters(); });
 
       /* ---------------- system pulse: every visual computed from the payload ---------------- */
+      var wbLiveUntil = 0; /* while a live TP owns the money banner's latest line, the pulse leaves it alone */
       function renderPulse() {
         var cat = WCATS[0];
         WCATS.forEach(function (c) { if (c.id === heroCat) cat = c; });
@@ -1071,6 +1186,16 @@
             '<span class="bar-track"><span class="bar-fill ' + md[2] + '" style="width:' + Math.round(counts[md[0]] / mx * 100) + '%; display:block;"></span></span>' +
             '<span class="mval">' + counts[md[0]] + "</span></div>";
         }).join("");
+        /* the money banner at the top rides the same payload and wallet view */
+        $("wbBig").textContent = fmtMoney(a.profit, true);
+        $("wbWins").textContent = a.tradesKnown ? a.wins.toLocaleString("en-US") : "—";
+        $("wbRate").textContent = wr == null ? "—" : wr.toFixed(1) + "%";
+        $("wbScope").textContent = heroCat.toUpperCase() + " VIEW";
+        if (Date.now() >= wbLiveUntil) {
+          $("wbLatest").innerHTML = tops.length
+            ? 'NEAREST THE MONEY · <b style="color:var(--bone);">' + esc(base(tops[0].s)) + "</b> · " + tops[0].d.toFixed(1) + ' bps TO ITS TP · <span class="' + (tops[0].pnl != null && tops[0].pnl >= 0 ? "pos" : "neg") + '">' + fmtMoney(tops[0].pnl, true) + "</span> FLOATING"
+            : "NO OPEN POSITION NEAR A TAKE-PROFIT RIGHT NOW";
+        }
       }
 
       /* ---------------- WHAT THE SYSTEM HAS LEARNED ---------------- */
@@ -1163,6 +1288,184 @@
       }
       renderLearned();
       renderPulse();
+
+      /* ---------------- AWARENESS + WHY: render the feed's boards when they land,
+         honest ABSENT until then — nothing here invents a stream, a reason or a figure.
+         Field access is deliberately tolerant: the boards' exact key names settle
+         in the feed, so each section accepts its known aliases and prints items
+         verbatim from whatever fields the records actually carry. ---------------- */
+      function awPick(obj, keys) { if (!obj) return null; for (var i = 0; i < keys.length; i++) { if (Array.isArray(obj[keys[i]])) return obj[keys[i]]; } return null; }
+      function awTs(it) {
+        if (!it || typeof it !== "object") return null;
+        var t = it.ts != null ? it.ts : it.time != null ? it.time : it.at;
+        if (t == null) return null;
+        var n = typeof t === "number" ? t : Date.parse(t);
+        return isFinite(n) ? n : null;
+      }
+      function awHead(it) { if (!it || typeof it === "string") return ""; return it.symbol || it.label || it.name || it.title || it.market || it.question || it.wallet || it.address || ""; }
+      function awBody(it) { if (typeof it === "string") return it; if (!it) return ""; return it.text || it.finding || it.reason || it.observed || it.note || it.summary || it.outcome || it.action || ""; }
+      function awTag(it) { if (!it || typeof it === "string") return "SCOUT"; return it.source || it.class || it.kind || it.tag || it.channel || "SCOUT"; }
+      function awAbsent(el, what) { $(el).innerHTML = '<div class="absent-box">ABSENT — ' + what + " has not landed in this snapshot yet, so nothing is shown rather than an invented one.</div>"; }
+      function awNone(el) { $(el).innerHTML = '<p class="dim" style="font-size:12px; margin:2px;">None on record in this snapshot.</p>'; }
+      function awShortAddr(s) { s = String(s || ""); return (s.length > 20 && s.indexOf(" ") < 0) ? s.slice(0, 8) + "…" + s.slice(-6) : s; }
+
+      /* findings stream: newest lands on top with a bing, replayed with real times */
+      var awFindDesc = [], awFindIdx = 0, awFindRows = [];
+      function awFindRow(it) {
+        var t = awTs(it);
+        return '<div class="fh-row"><span class="fh-kind f">' + esc(String(awTag(it)).toUpperCase().slice(0, 10)) + "</span>" +
+          '<span class="fh-time">' + (t != null ? fmtClock(t) : "—") + "</span>" +
+          (awHead(it) ? '<span class="fh-sym">' + esc(awShortAddr(awHead(it))) + "</span>" : "") +
+          '<span class="fh-reason">' + esc(awBody(it)) + "</span></div>";
+      }
+      function awFindPush() {
+        if (!awFindDesc.length) return;
+        awFindRows.unshift(awFindRow(awFindDesc[awFindIdx % awFindDesc.length]));
+        awFindIdx++;
+        if (awFindRows.length > 12) awFindRows.pop();
+        $("awFindings").innerHTML = awFindRows.join("");
+        var bp = $("awBing");
+        bp.hidden = false;
+        if (!REDUCED) { bp.style.animation = "none"; void bp.offsetWidth; bp.style.animation = ""; }
+        clearTimeout(bp._t);
+        bp._t = setTimeout(function () { bp.hidden = true; }, 1200);
+      }
+      function fmtCountdown(ts) {
+        var d = ts - Date.now();
+        if (d <= 0) return "DUE NOW";
+        var s = Math.floor(d / 1000), dd = Math.floor(s / 86400);
+        return (dd ? dd + "D " : "") + pad2(Math.floor(s % 86400 / 3600)) + ":" + pad2(Math.floor(s % 3600 / 60)) + ":" + pad2(s % 60);
+      }
+      function awCountdownTick() {
+        Array.prototype.forEach.call(document.querySelectorAll("[data-awcd]"), function (el) {
+          el.textContent = fmtCountdown(parseInt(el.getAttribute("data-awcd"), 10));
+        });
+      }
+
+      function renderAwareness() {
+        var AW = P.awareness_board || null;
+        if (!AW) {
+          $("awAbsent").innerHTML = '<div class="absent-box" style="margin-top:0;">ABSENT — the feed\'s dedicated awareness_board section has not landed in this snapshot yet. Every sense below stays empty rather than faked; the NOT CONNECTED tiles at the bottom are the standing truth for source classes the desk never ingests.</div>';
+        } else if (AW.label) {
+          $("awAbsent").innerHTML = '<p class="dim" style="font-size:11px; margin:0 2px;">' + esc(AW.label) + "</p>";
+        }
+        var finds = awPick(AW, ["findings", "scout_findings", "social_findings", "stream"]);
+        if (finds) {
+          if (finds.length) {
+            awFindDesc = finds.slice().sort(function (a, b) { return (awTs(b) || 0) - (awTs(a) || 0); });
+            $("awFindState").textContent = finds.length + " FINDINGS · SNAPSHOT TAPE, REAL TIMES";
+            awFindPush(); awFindPush();
+          } else { awNone("awFindings"); $("awFindState").textContent = "NONE ON RECORD"; }
+        } else { awAbsent("awFindings", "the scout / social findings stream"); $("awFindState").textContent = "ABSENT IN THIS SNAPSHOT"; }
+
+        var att = awPick(AW, ["attention", "promotions", "attention_ranker", "attention_promotions", "ranked"]);
+        if (att) {
+          if (att.length) {
+            $("awAttState").textContent = att.length + " PROMOTED";
+            $("awAttention").innerHTML = att.map(function (it) {
+              var t = awTs(it), sc = (it && typeof it === "object") ? num(it.score) : null;
+              var bar = "";
+              if (sc != null) {
+                var pct = Math.max(2, Math.min(100, sc <= 1 ? sc * 100 : sc));
+                bar = '<div class="mix-row" style="padding:5px 0 1px;"><span class="mkind">SCORE</span><span class="bar-track"><span class="bar-fill gold" style="width:' + pct.toFixed(0) + '%; display:block;"></span></span><span class="mval">' + sc + "</span></div>";
+              }
+              return '<div class="cruc-row"><div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;"><b style="font-size:13px;">' + esc(awHead(it) || "—") + '</b><span class="desk-state" style="color:var(--gold);">PROMOTED</span>' +
+                (t != null ? '<span class="fh-time" style="margin-left:auto;">' + fmtClock(t) + "</span>" : "") + "</div>" + bar +
+                (awBody(it) ? '<div class="bonedim" style="font-size:12px; margin-top:3px;">' + esc(awBody(it)) + "</div>" : "") + "</div>";
+            }).join("");
+          } else { awNone("awAttention"); $("awAttState").textContent = "NONE ON RECORD"; }
+        } else { awAbsent("awAttention", "the attention ranker's promotions"); $("awAttState").textContent = "ABSENT IN THIS SNAPSHOT"; }
+
+        var wal = awPick(AW, ["wallets", "tracked_wallets", "tagged_wallets", "tracked"]);
+        if (wal) {
+          if (wal.length) {
+            $("awWalState").textContent = wal.length + " TRACKED";
+            $("awWallets").innerHTML = wal.map(function (it) {
+              var t = awTs(it);
+              var tag = (it && typeof it === "object" && (it.tag || it.label_tag || it.class)) || "TRACKED";
+              return '<div class="wrow"><span class="mono" style="font-weight:800; flex-shrink:0;">' + esc(awShortAddr(awHead(it)) || "WALLET") + '</span>' +
+                '<span class="desk-state" style="color:var(--violet); flex-shrink:0;">' + esc(String(tag).toUpperCase()) + "</span>" +
+                '<span class="dim" style="flex:1; min-width:0;">' + esc((it && it.observed) || (it && it.note) || (it && it.last_seen) || "") + "</span>" +
+                (t != null ? '<span class="fh-time" style="flex-shrink:0;">' + fmtClock(t) + "</span>" : "") + "</div>";
+            }).join("");
+          } else { awNone("awWallets"); $("awWalState").textContent = "NONE ON RECORD"; }
+        } else { awAbsent("awWallets", "the tracked &amp; tagged wallet board"); $("awWalState").textContent = "ABSENT IN THIS SNAPSHOT"; }
+
+        var evs = awPick(AW, ["events", "calendar", "upcoming_events", "event_calendar"]);
+        if (evs) {
+          if (evs.length) {
+            $("awEvState").textContent = evs.length + " AHEAD · COUNTDOWNS LIVE";
+            $("awEvents").innerHTML = evs.slice().sort(function (a, b) { return (awTs(a) || 0) - (awTs(b) || 0); }).map(function (it) {
+              var t = awTs(it);
+              return '<div class="prox-row"><span class="psym" style="width:118px;">' + esc((it && (it.name || it.event || it.title)) || "EVENT") + '</span>' +
+                '<span class="dim" style="flex:1; min-width:0;">' + (t != null ? new Date(t).toISOString().slice(0, 10) + " · " + fmtClock(t) + " UTC" : esc((it && (it.when || it.date)) || "")) + ((it && it.impact) ? " · " + esc(it.impact) : "") + "</span>" +
+                (t != null ? '<span class="pval" data-awcd="' + t + '" style="color:var(--gold); font-weight:800;">' + fmtCountdown(t) + "</span>" : '<span class="pval">—</span>') + "</div>";
+            }).join("");
+          } else { awNone("awEvents"); $("awEvState").textContent = "NONE ON RECORD"; }
+        } else { awAbsent("awEvents", "the upcoming-events calendar"); $("awEvState").textContent = "ABSENT IN THIS SNAPSHOT"; }
+
+        var res = awPick(AW, ["resolutions", "prediction_resolutions", "settled", "resolved"]);
+        if (res) {
+          if (res.length) {
+            $("awResState").textContent = res.length + " SETTLED";
+            $("awResolutions").innerHTML = res.map(function (it) {
+              var t = awTs(it), pnl = (it && typeof it === "object") ? num(it.pnl != null ? it.pnl : it.pnl_usdt) : null;
+              var outc = (it && (it.outcome || it.result || it.resolution)) || "";
+              return '<div class="wrow"><span style="font-weight:700; flex:1; min-width:0;">' + esc(awHead(it) || "MARKET") + "</span>" +
+                (outc ? '<span class="desk-state" style="color:var(--green); flex-shrink:0;">' + esc(String(outc).toUpperCase()) + "</span>" : "") +
+                (pnl != null ? '<span class="mono ' + (pnl >= 0 ? "pos" : "neg") + '" style="font-weight:800; flex-shrink:0;">' + fmtMoney(pnl, true) + "</span>" : "") +
+                (t != null ? '<span class="fh-time" style="flex-shrink:0;">' + fmtClock(t) + "</span>" : "") + "</div>";
+            }).join("");
+          } else { awNone("awResolutions"); $("awResState").textContent = "NONE ON RECORD"; }
+        } else { awAbsent("awResolutions", "the prediction resolutions"); $("awResState").textContent = "ABSENT IN THIS SNAPSHOT"; }
+      }
+
+      function renderWhy() {
+        var WB = P.why_board || null;
+        if (!WB) {
+          $("whyState").textContent = "why_board · ABSENT IN THIS SNAPSHOT";
+          awAbsent("whyAbsent", "the feed's why_board section (each desk's recorded reasons + the overseers' open challenges)");
+          return;
+        }
+        $("whyState").textContent = WB.label || "from the feed's why_board";
+        function whyRow(r, deskName) {
+          if (typeof r === "string") return '<div class="fh-row">' + (deskName ? '<span class="fh-sym">' + esc(deskName) + "</span>" : "") + '<span class="fh-reason">' + esc(r) + "</span></div>";
+          var t = awTs(r), kind = String((r && (r.kind || r.type)) || "WHY").toUpperCase();
+          return '<div class="fh-row"><span class="fh-kind ' + (/VETO/.test(kind) ? "v" : /FREEZE|STAND/.test(kind) ? "f" : "q") + '">' + esc(kind.slice(0, 10)) + "</span>" +
+            (t != null ? '<span class="fh-time">' + fmtClock(t) + "</span>" : "") +
+            (deskName ? '<span class="fh-sym">' + esc(deskName) + "</span>" : "") +
+            '<span class="fh-reason">' + esc((r && (r.reason || r.text || r.action)) || "") + "</span></div>";
+        }
+        var html = "";
+        var desks = awPick(WB, ["desks", "traders", "rows"]);
+        if (desks && desks.length) {
+          desks.forEach(function (d) {
+            var dname = (d && (d.desk || d.desk_id || d.name)) || "DESK";
+            var reasons = awPick(d, ["reasons", "actions", "entries", "recent", "log"]) || [];
+            html += '<div class="cruc-row"><div style="font-weight:800; font-size:13px;">' + esc(dname) + "</div>";
+            html += reasons.length ? reasons.slice(0, 5).map(function (r) { return whyRow(r, ""); }).join("") : '<p class="dim" style="font-size:12px; margin:4px 0 0;">No recorded reasons for this desk in the board.</p>';
+            html += "</div>";
+          });
+        } else {
+          var flat = awPick(WB, ["reasons", "actions", "entries", "log"]);
+          if (flat && flat.length) html = flat.slice(0, 14).map(function (r) { return whyRow(r, (r && (r.desk || r.desk_id)) || ""); }).join("");
+        }
+        $("whyDesks").innerHTML = html || '<p class="dim" style="font-size:12px; margin:2px;">No desk reasons in this board.</p>';
+        var chal = awPick(WB, ["challenges", "open_challenges", "overseer_challenges"]);
+        if (chal && chal.length) {
+          $("whyChalLabel").style.display = "";
+          $("whyChallenges").innerHTML = chal.map(function (c) {
+            var t = awTs(c);
+            return '<div class="cruc-row"><div style="display:flex; gap:8px; flex-wrap:wrap; align-items:baseline;"><span class="desk-state" style="color:var(--gold);">CHALLENGE</span><b style="font-size:12.5px;">' + esc((c && (c.from || c.agent || c.overseer)) || "OVERSEER") + ((c && (c.desk || c.to)) ? " → " + esc(c.desk || c.to) : "") + "</b>" +
+              (t != null ? '<span class="fh-time">' + fmtClock(t) + "</span>" : "") +
+              ((c && c.status) ? '<span class="dim mono" style="font-size:10.5px;">' + esc(c.status) + "</span>" : "") + '</div><p class="bonedim" style="margin:4px 0 0; font-size:12px;">' + esc((c && (c.text || c.challenge || c.reason)) || "") + "</p></div>";
+          }).join("");
+        }
+      }
+      renderAwareness();
+      renderWhy();
+      setInterval(function () { if (!document.hidden) awFindPush(); }, 2600);
+      setInterval(awCountdownTick, 1000);
 
       /* ---------------- tabs ---------------- */
       function switchTab(name) {
@@ -1703,6 +2006,22 @@
         el.classList.remove("fx-flash"); void el.offsetWidth; el.classList.add("fx-flash");
         setTimeout(function () { el.classList.remove("fx-flash"); }, 1250);
       }
+      /* money rain inside the top banner — fired from celebrate() only, so it
+         obeys the same law as the fireworks: a genuine live TP cross or nothing */
+      function moneyRain() {
+        if (REDUCED) return;
+        var box = $("wbMoney"); if (!box) return;
+        for (var i = 0; i < 16; i++) {
+          var s = document.createElement("span");
+          s.textContent = "$";
+          s.style.left = (4 + Math.random() * 92) + "%";
+          s.style.fontSize = (13 + Math.random() * 15).toFixed(0) + "px";
+          s.style.animationDelay = (Math.random() * 0.35).toFixed(2) + "s";
+          s.style.color = Math.random() < 0.6 ? "#2dff9f" : "#ffb020";
+          box.appendChild(s);
+          (function (el) { setTimeout(function () { el.remove(); }, 2600); })(s);
+        }
+      }
       function celebrate(ev) {
         var wb = $("whyBanner");
         $("whyKind").textContent = "TP HIT";
@@ -1713,6 +2032,10 @@
         clearTimeout(wb._t);
         wb._t = setTimeout(function () { wb.hidden = true; }, 7000);
         fireworks(); bing();
+        moneyRain();
+        wbLiveUntil = Date.now() + 15000;
+        $("wbLatest").innerHTML = '<span class="pos" style="font-weight:800;">$ TAKE-PROFIT BANKED — ' + esc(ev.symbol ? base(ev.symbol) : "") + "</span> · " + esc(ev.reason || "");
+        flashEl($("winBanner"));
         flashEl($("stageBox"));
         flashEl(document.querySelector(".hero"));
         var pr = posRefs[ev.symbol];
