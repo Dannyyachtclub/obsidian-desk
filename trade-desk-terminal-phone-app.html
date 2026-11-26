@@ -177,12 +177,30 @@
       .badge .fig-label { font-size: 8.5px; }
       .badge .bv { font-family: "JetBrains Mono", monospace; font-weight: 800; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .badge.tp .bv { color: var(--green); } .badge.last .bv { color: var(--bone); } .badge.entry .bv { color: var(--violet); }
-      .chart-box { margin-top: 8px; border-radius: 10px; overflow: hidden; background: #06030f; border: 1px solid var(--line-soft); }
+      .chart-box { margin-top: 8px; border-radius: 10px; overflow: hidden; background: #06030f; border: 1px solid var(--line-soft); position: relative; }
       .chart-box canvas { display: block; width: 100%; }
       .grid-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
       .mini-chart { border: 1px solid var(--line-soft); border-radius: 10px; background: #06030f; padding: 6px 6px 4px; text-align: left; width: 100%; }
       .mini-chart .mc-head { display: flex; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 700; margin-bottom: 3px; }
       .mini-chart canvas { display: block; width: 100%; }
+
+      /* ---------- chart price kit: highlighted price, move chip, crosshair ---------- */
+      .exp-price { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; color: var(--bone); line-height: 1.1; }
+      .exp-price.up { color: var(--green); text-shadow: 0 0 14px rgba(45,255,159,0.35); }
+      .exp-price.down { color: var(--red); text-shadow: 0 0 14px rgba(255,77,109,0.35); }
+      .move-chip { font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+      .move-chip.up { color: var(--green); background: rgba(45,255,159,0.10); }
+      .move-chip.down { color: var(--red); background: rgba(255,77,109,0.10); }
+      .badge.last .bv.up { color: var(--green); }
+      .badge.last .bv.down { color: var(--red); }
+      .cross-chip {
+        position: absolute; z-index: 6; pointer-events: none; max-width: 82%;
+        background: rgba(10,5,24,0.95); border: 1px solid rgba(157,107,255,0.65); border-radius: 9px;
+        padding: 6px 9px; font-family: "JetBrains Mono", monospace; font-size: 10.5px; font-weight: 700;
+        line-height: 1.55; color: var(--bone); white-space: nowrap;
+        box-shadow: 0 10px 26px rgba(0,0,0,0.6);
+      }
+      .cross-chip .cl { color: var(--dim); font-weight: 600; }
 
       /* ---------- tape ---------- */
       .tape-row { display: flex; align-items: baseline; gap: 8px; padding: 3.5px 2px; border-bottom: 1px solid var(--line-soft); font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
@@ -496,7 +514,7 @@
             <div class="badge stop"><div class="fig-label">STOP</div><div class="bv" id="bdStop">—</div></div>
           </div>
 
-          <div class="chart-box" id="stageBox" style="margin-top:6px;"><canvas id="stageChart" height="300" role="img" aria-label="Live candle chart — candles only, nothing drawn over them"></canvas></div>
+          <div class="chart-box" id="stageBox" style="margin-top:6px;"><canvas id="stageChart" height="300" role="img" aria-label="Live candle chart with price axis, live price line and long-press crosshair"></canvas><div class="cross-chip" id="stageChip" hidden></div></div>
           <div class="grid-charts" id="gridBox" hidden></div>
 
           <div id="stagePosLine" style="margin-top:8px; font-size:12.5px;" class="bonedim">No position staged.</div>
@@ -577,11 +595,12 @@
         <section class="panel" style="margin-top:10px; padding:12px;" aria-label="Explorer chart — search any symbol">
           <div class="sec-head">
             <span class="sec-title">EXPLORER</span>
-            <span class="mono" id="expLast" style="font-size:13px; font-weight:800;">—</span>
+            <span class="mono exp-price" id="expLast">—</span>
+            <span class="move-chip" id="expMove" hidden>—</span>
             <span class="dim" id="expState" style="font-size:11px;">pick a symbol</span>
           </div>
           <input class="sym-search" id="expSearch" type="search" list="symList" placeholder="Search a symbol to explore — e.g. BTC, SOL, HYPE…" aria-label="Search for a symbol to explore" style="margin-top:8px;" />
-          <div class="chart-box"><canvas id="expChart" height="190" role="img" aria-label="Explorer candle chart"></canvas></div>
+          <div class="chart-box"><canvas id="expChart" height="190" role="img" aria-label="Explorer candle chart with price axis, live price line, pinch zoom and long-press crosshair"></canvas><div class="cross-chip" id="expChip" hidden></div></div>
         </section>
 
         <section class="panel" style="margin-top:10px; padding:10px 12px;" aria-label="Agent activity — every move the agents make, as it lands">
@@ -1886,8 +1905,36 @@
         if (e1) { e1.h = Math.max(e1.h, price); e1.l = Math.min(e1.l, price); e1.c = price; e1.v += size || 0; }
       }
 
-      /* ---------------- chart drawing (candles only — nothing over the plot) ---------------- */
+      /* ---------------- chart drawing ----------------
+         Both main charts share one price kit: a right-side gutter carrying
+         gridline price labels plus the level tags (TP / ENTRY / STOP where
+         the payload carries them, LAST always — a solid line with a filled
+         tag), and a long-press crosshair. Grid mini-charts keep the compact
+         form: level tags only, no axis. */
       var zoomBars = { stageChart: null, expChart: null }; /* pinch/wheel zoom: candles shown per chart, null = automatic fit */
+      var panBars = { stageChart: 0, expChart: 0 }; /* candles panned back from the live edge (quick drag when zoomed) */
+      var crossState = { stageChart: null, expChart: null }; /* held long-press crosshair {x, y} in css px, per chart */
+      var chartGeom = {}; /* last-drawn geometry per chart id — pan reads it */
+      function visibleSlice(cv, sym, tf) {
+        var st = storeFor(sym, tf), arr = st.arr || [];
+        var maxN = Math.max(30, Math.floor(((cv && cv.clientWidth) || 320) / 5));
+        var zn = cv && cv.id ? zoomBars[cv.id] : null;
+        var n = zn != null ? Math.max(10, Math.min(600, zn)) : maxN;
+        var off = cv && cv.id ? (panBars[cv.id] || 0) : 0;
+        off = Math.max(0, Math.min(off, Math.max(0, arr.length - 1)));
+        var end = arr.length - off;
+        var start = Math.max(0, end - n);
+        return { vis: arr.slice(start, end), total: arr.length };
+      }
+      /* real movement across the candles currently in view — last close vs
+         first open. This, and only this, is allowed to colour a price. */
+      function visibleMovePct(cv, sym, tf) {
+        var vis = visibleSlice(cv, sym, tf).vis;
+        if (!vis || vis.length < 2) return null;
+        var f = vis[0].o, l = vis[vis.length - 1].c;
+        if (!(f > 0) || !isFinite(l)) return null;
+        return (l - f) / f * 100;
+      }
       function fitCanvas(cv, cssH) {
         var dpr = window.devicePixelRatio || 1;
         var w = cv.clientWidth || cv.parentElement.clientWidth || 320;
@@ -1902,9 +1949,8 @@
         ctx.clearRect(0, 0, W, H);
         var st = storeFor(sym, tf), arr = st.arr;
         if (!arr || arr.length < 2) return false;
-        var maxN = Math.max(30, Math.floor(W / 5));
-        var zn = cv.id ? zoomBars[cv.id] : null;
-        var vis = arr.slice(-(zn != null ? Math.max(10, Math.min(600, zn)) : maxN));
+        var isMain = cv.id === "stageChart" || cv.id === "expChart";
+        var vis = visibleSlice(cv, sym, tf).vis;
         var lo = Infinity, hi = -Infinity;
         vis.forEach(function (c) { if (c.l < lo) lo = c.l; if (c.h > hi) hi = c.h; });
         /* stage level lines: only the levels the payload actually carries for
@@ -1942,7 +1988,8 @@
         var pad = (hi - lo) * 0.07; hi += pad; lo -= pad;
         var y = function (p) { return H - (p - lo) / (hi - lo) * H; };
         ctx.strokeStyle = "rgba(167,139,250,0.10)"; ctx.lineWidth = 1;
-        for (var g = 1; g <= 3; g++) { var gy = H * g / 4; ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(PW, gy); ctx.stroke(); }
+        var gridN = isMain ? 4 : 3;
+        for (var g = 1; g <= gridN; g++) { var gy = H * g / (gridN + 1); ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(PW, gy); ctx.stroke(); }
         var step = PW / vis.length, bw = Math.max(1.5, step * 0.62);
         vis.forEach(function (c, i) {
           var x = i * step + step / 2, up = c.c >= c.o;
@@ -1959,6 +2006,18 @@
           ctx.fillRect(PW, 0, G, H);
           ctx.strokeStyle = "rgba(167,139,250,0.28)"; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(PW + 0.5, 0); ctx.lineTo(PW + 0.5, H); ctx.stroke();
+        }
+        /* price axis: one readable label in the gutter per gridline, priced
+           off the same scale the candles were drawn with, so every candle
+           sits against a real price */
+        if (isMain && G) {
+          ctx.font = "700 9.5px 'JetBrains Mono', monospace";
+          ctx.fillStyle = "rgba(195,184,234,0.92)";
+          for (var g2 = 1; g2 <= gridN; g2++) {
+            var gy2 = H * g2 / (gridN + 1);
+            var gp = lo + (H - gy2) / H * (hi - lo);
+            ctx.fillText(fmtPrice(gp), PW + 6, gy2 + 3);
+          }
         }
         /* level lines span the plot; their tags sit in the RIGHT gutter,
            aligned with their lines — nothing is drawn over the candles */
@@ -1997,6 +2056,49 @@
           ctx.fillStyle = "#ff4d6d";
           ctx.fillText("STOP —", PW + 6, H - 5);
         }
+        /* geometry the gesture layer pans against */
+        if (cv.id) chartGeom[cv.id] = { step: step, total: arr.length };
+        /* crosshair: while a long-press is held, guide lines follow the
+           finger — vertical snapped to the touched candle, horizontal at
+           the fingertip — a filled violet tag in the gutter reads the exact
+           price under the fingertip (touch a candle's wick low and the tag
+           reads that low), and the readout chip carries the candle's full
+           open / high / low / close and its time */
+        var chip = cv.id === "stageChart" ? $("stageChip") : cv.id === "expChart" ? $("expChip") : null;
+        var cs = isMain && cv.id ? crossState[cv.id] : null;
+        if (cs && vis.length) {
+          var ci = Math.max(0, Math.min(vis.length - 1, Math.floor(cs.x / step)));
+          var cc = vis[ci];
+          var cxp = ci * step + step / 2;
+          var cyp = Math.max(0, Math.min(H, cs.y));
+          var fp = lo + (H - cyp) / H * (hi - lo);
+          ctx.fillStyle = "rgba(157,107,255,0.10)";
+          ctx.fillRect(ci * step, 0, step, H);
+          ctx.strokeStyle = "rgba(244,240,255,0.6)"; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+          ctx.beginPath(); ctx.moveTo(cxp, 0); ctx.lineTo(cxp, H); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, cyp); ctx.lineTo(PW, cyp); ctx.stroke();
+          ctx.setLineDash([]);
+          if (G) {
+            ctx.font = "700 10px 'JetBrains Mono', monospace";
+            var ft = fmtPrice(fp), ftw = ctx.measureText(ft).width;
+            ctx.fillStyle = "#6d28d9";
+            ctx.fillRect(PW + 2, cyp - 8, ftw + 8, 16);
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(ft, PW + 6, cyp + 3);
+          }
+          if (chip) {
+            var cd = new Date(cc.t);
+            var tfL = typeof TFS !== "undefined" ? TFS.filter(function (t) { return t[0] === tf; })[0] : null;
+            chip.innerHTML = '<span class="cl">O</span> ' + fmtPrice(cc.o) + ' &nbsp;<span class="cl">H</span> ' + fmtPrice(cc.h) +
+              '<br /><span class="cl">L</span> ' + fmtPrice(cc.l) + ' &nbsp;<span class="cl">C</span> ' + fmtPrice(cc.c) +
+              '<br /><span class="cl">' + pad2(cd.getUTCHours()) + ":" + pad2(cd.getUTCMinutes()) + " UTC" + (tfL ? " · " + tfL[1] : "") + "</span>";
+            chip.hidden = false;
+            var cw = chip.offsetWidth || 180, chh = chip.offsetHeight || 58;
+            var cl2 = cxp + 12 + cw > W - 4 ? cxp - cw - 12 : cxp + 12;
+            chip.style.left = Math.max(4, Math.min(cl2, W - cw - 4)) + "px";
+            chip.style.top = (cyp < chh + 16 ? H - chh - 6 : 6) + "px";
+          }
+        } else if (chip) chip.hidden = true;
         return true;
       }
 
@@ -2022,6 +2124,12 @@
         $("bdTp").textContent = pos ? fmtPrice(num(pos.tp_quote)) : "—";
         $("bdEntry").textContent = pos ? fmtPrice(num(pos.entry_price)) : "—";
         $("bdLast").textContent = fmtPrice(px);
+        /* the stage reads prices the same way as the explorer: the LAST
+           figure is coloured by the real move across the candles in view —
+           green up, red down, plain when flat or not enough history */
+        var mvS = visibleMovePct($("stageChart"), stage.sym, stage.tf);
+        $("bdLast").classList.toggle("up", mvS != null && mvS > 0);
+        $("bdLast").classList.toggle("down", mvS != null && mvS < 0);
         $("bdStop").textContent = pos && posStop(pos) != null ? fmtPrice(posStop(pos)) : "—";
         if (pos) {
           var pnl = livePnl(stage.sym), d = distBps(stage.sym);
@@ -2267,7 +2375,7 @@
         checkTp(sym, prev, px);
         prevPx[sym] = px;
         if (sym === stage.sym) { updateBadges(); if (stage.view === "grid") drawGridSoon(); }
-        if (sym === explorer.sym) $("expLast").textContent = fmtPrice(px);
+        if (sym === explorer.sym) updateExpHeader();
       }
       function checkTp(sym, prev, px) {
         var pos = POS[sym];
@@ -2319,21 +2427,48 @@
           "feed · waiting for the first candles on " + stage.sym + " — snapshot mark " + fmtPrice(snapMark(stage.sym)) + (feedMode === "snapshot" ? " · live routes unreachable — retrying" : "");
       }
       function drawExplorer() {
-        drawCandles($("expChart"), explorer.sym, stage.tf, 190);
+        /* the explorer gets the full stage kit: passing its own symbol as
+           levelsSym gives it the price-axis gutter, the TP / ENTRY tags when
+           the desks hold the symbol, and the solid LAST line with its filled
+           gutter tag — the current price lives on the chart, not just in the
+           header */
+        drawCandles($("expChart"), explorer.sym, stage.tf, 190, explorer.sym);
         $("expState").textContent = explorer.sym.replace("USDT", "/USDT") + " · " + TFS.filter(function (t) { return t[0] === stage.tf; })[0][1];
+        updateExpHeader();
+      }
+      /* the explorer's live price, big beside the token name and coloured by
+         the real move across the candles in view, with the % move beside it
+         — green up, red down, plain and chip-less when flat or when there
+         is not enough real candle history to call it */
+      function updateExpHeader() {
+        var el = $("expLast"), mv = $("expMove");
+        if (!el) return;
         var px = priceOf(explorer.sym);
-        if (px != null) $("expLast").textContent = fmtPrice(px);
+        if (px != null) el.textContent = fmtPrice(px);
+        var pct = visibleMovePct($("expChart"), explorer.sym, stage.tf);
+        var up = pct != null && pct > 0, dn = pct != null && pct < 0;
+        el.classList.toggle("up", up);
+        el.classList.toggle("down", dn);
+        if (mv) {
+          if (up || dn) { mv.hidden = false; mv.textContent = (up ? "+" : "") + pct.toFixed(2) + "%"; mv.className = "move-chip " + (up ? "up" : "down"); }
+          else mv.hidden = true;
+        }
       }
 
-      /* ---------------- chart zoom: pinch + wheel on both charts ----------------
-         The timeframe chips are the zoom presets; a pinch (fingers apart =
-         zoom in, together = zoom out) or a mouse wheel on a chart changes
-         how many candles it shows, anchored on the newest candle.
-         Double-tap / double-click resets to the automatic fit. */
+      /* ---------------- chart gestures: zoom, pan, crosshair ----------------
+         One pointer system drives both main charts so they handle the same:
+         a pinch (fingers apart = zoom in, together = zoom out) or a mouse
+         wheel changes how many candles show; a quick drag pans back and
+         forth through history whenever older candles sit off-view; a
+         press-and-hold with the finger near-still raises the crosshair
+         instead, and sliding then scrubs candle to candle — so pan and
+         crosshair never fight. Double-tap / double-click resets zoom and
+         pan to the automatic live fit. */
       function attachZoom(cv) {
         if (!cv) return;
         cv.style.touchAction = "none";
         var pts = {}, pinch0 = null;
+        var drag = null, lpTimer = null, lastTap = 0;
         function curN() {
           return zoomBars[cv.id] != null ? zoomBars[cv.id] : Math.max(30, Math.floor((cv.clientWidth || 320) / 5));
         }
@@ -2347,10 +2482,21 @@
           var a = pts[ks[0]], b = pts[ks[1]];
           return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
         }
+        function local(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+        function clearLp() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } }
+        function endCross() { if (crossState[cv.id]) { crossState[cv.id] = null; drawSoon(); } }
+        function resetView() { zoomBars[cv.id] = null; panBars[cv.id] = 0; endCross(); drawSoon(); }
+        cv.addEventListener("contextmenu", function (e) { e.preventDefault(); });
         cv.addEventListener("pointerdown", function (e) {
           pts[e.pointerId] = { x: e.clientX, y: e.clientY };
           try { cv.setPointerCapture(e.pointerId); } catch (err) {}
-          if (Object.keys(pts).length === 2) pinch0 = { d: pdist(), n: curN() };
+          if (Object.keys(pts).length === 2) { clearLp(); drag = null; endCross(); pinch0 = { d: pdist(), n: curN() }; return; }
+          var p = local(e);
+          drag = { id: e.pointerId, x0: p.x, y0: p.y, lx: p.x, acc: 0, mode: "pending", t0: performance.now() };
+          clearLp();
+          lpTimer = setTimeout(function () {
+            if (drag && drag.mode === "pending") { drag.mode = "cross"; crossState[cv.id] = { x: drag.x0, y: drag.y0 }; drawSoon(); }
+          }, 330);
         });
         cv.addEventListener("pointermove", function (e) {
           if (!pts[e.pointerId]) return;
@@ -2358,11 +2504,41 @@
           if (pinch0 && Object.keys(pts).length >= 2) {
             var d = pdist();
             if (d > 0 && pinch0.d > 0) setN(pinch0.n * pinch0.d / d);
+            return;
           }
+          if (!drag || e.pointerId !== drag.id) return;
+          var p = local(e);
+          if (drag.mode === "cross") { crossState[cv.id] = { x: p.x, y: p.y }; drawSoon(); return; }
+          if (drag.mode === "pending" && Math.abs(p.x - drag.x0) + Math.abs(p.y - drag.y0) > 10) { clearLp(); drag.mode = "pan"; }
+          if (drag.mode === "pan") {
+            var g = chartGeom[cv.id];
+            if (g && g.step > 0) {
+              drag.acc += (p.x - drag.lx) / g.step;
+              var whole = Math.trunc(drag.acc);
+              if (whole !== 0) {
+                drag.acc -= whole;
+                var maxOff = Math.max(0, g.total - Math.min(curN(), g.total));
+                var no = Math.max(0, Math.min(maxOff, (panBars[cv.id] || 0) + whole));
+                if (no !== panBars[cv.id]) { panBars[cv.id] = no; drawSoon(); }
+              }
+            }
+          }
+          drag.lx = p.x;
         });
         function pend(e) {
           delete pts[e.pointerId];
           if (Object.keys(pts).length < 2) pinch0 = null;
+          if (!drag || e.pointerId !== drag.id) return;
+          clearLp();
+          var wasCross = drag.mode === "cross";
+          var quickTap = drag.mode === "pending" && performance.now() - drag.t0 < 260;
+          drag = null;
+          if (wasCross) { endCross(); lastTap = 0; return; }
+          if (quickTap) {
+            var now = performance.now();
+            if (now - lastTap < 320) { lastTap = 0; resetView(); }
+            else lastTap = now;
+          }
         }
         cv.addEventListener("pointerup", pend);
         cv.addEventListener("pointercancel", pend);
@@ -2370,7 +2546,7 @@
           e.preventDefault();
           setN(curN() * (e.deltaY > 0 ? 1.18 : 0.85));
         }, { passive: false });
-        cv.addEventListener("dblclick", function () { zoomBars[cv.id] = null; drawSoon(); });
+        cv.addEventListener("dblclick", resetView);
       }
       attachZoom($("stageChart"));
       attachZoom($("expChart"));
