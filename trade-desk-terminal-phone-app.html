@@ -214,12 +214,20 @@
       }
       .cross-chip .cl { color: var(--dim); font-weight: 600; }
 
-      /* ---------- tape ---------- */
-      .tape-row { display: flex; align-items: baseline; gap: 8px; padding: 3.5px 2px; border-bottom: 1px solid var(--line-soft); font-family: "JetBrains Mono", monospace; font-size: 11.5px; }
+      /* ---------- tape (the desks' trade events, below the stage) ----------
+         Each row stacks: a meta line (kind chip · time · symbol · desk)
+         whose pieces may shrink and wrap, then the reason on its own
+         full-width line — the reason never competes with rigid meta
+         blocks for the row's width. */
+      .tape-row { padding: 5px 2px 6px; border-bottom: 1px solid var(--line-soft); font-family: "JetBrains Mono", monospace; }
       .tape-row:last-child { border-bottom: 0; }
-      .tape-side { font-weight: 800; font-size: 10px; letter-spacing: 0.08em; width: 34px; flex-shrink: 0; }
+      .tape-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
+      .tape-time { font-size: 10px; color: var(--dim); white-space: nowrap; }
+      .tape-sym { font-weight: 700; font-size: 11px; min-width: 0; overflow-wrap: anywhere; }
+      .tape-desk { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 10.5px; color: var(--violet); }
+      .tape-reason { display: block; margin-top: 2px; font-size: 11.5px; line-height: 1.45; color: var(--bone-dim); overflow-wrap: anywhere; }
+      .tape-side { font-weight: 800; font-size: 10px; letter-spacing: 0.08em; }
       .tape-side.buy { color: var(--green); } .tape-side.sell { color: var(--red); }
-      .tape-desk { flex-shrink: 0; font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 10.5px; color: var(--violet); max-width: 38%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
       /* ---------- scroll boxes: fixed-height lists with touch-hold-to-pause ----------
          The firehose, the awareness events board and the scout findings live
@@ -555,18 +563,20 @@
         <div class="bs-cell"><div class="fig-label">FEES</div><div class="bv" id="bsFees">—</div></div>
       </div>
 
-      <!-- ============ LIVE TAPE · DIRECTLY UNDER THE HERO ============ -->
-      <section class="panel" data-live-chrome style="padding:10px 12px; margin-bottom:10px;" aria-label="The tape — our own desks' trade events off the event bus: entries, take-profits, stops and exits, each labelled with its desk">
+      <!-- ============ LIVE FEED CHART · DIRECTLY UNDER THE HERO ============
+           The streaming feed chart: every print on it is one of OUR OWN
+           desks' buy or sell orders (fills, take-profits, stops, exits off
+           the event bus, carrying the order's side, price and size). Market
+           prints never enter this chart — they stay on the candle charts
+           as background only. -->
+      <section class="panel" data-live-chrome style="padding:10px 12px; margin-bottom:10px;" aria-label="Live feed chart — the stream of our own desks' buy and sell orders: buys plot above the centre line in green, sells below it in red, and the centre line traces the running buy-minus-sell balance of desk orders">
         <div class="sec-head">
-          <span class="sec-title">THE TAPE · OUR DESKS' TRADES</span>
-          <span class="dim" id="tapeState" style="font-size:11px;">reading the event bus…</span>
-          <button id="tapePause" class="ctl-btn" aria-pressed="false" style="margin-left:auto;">PAUSE</button>
+          <span class="sec-title">LIVE FEED · OUR DESKS' ORDERS</span>
+          <span class="dim" id="feedState" style="font-size:11px;">reading our desks' orders…</span>
         </div>
-        <div id="printTape" style="margin-top:4px;"></div>
-        <div class="ticker-wrap" id="tickerWrap" style="margin:8px 0 4px;" aria-label="Desk events as they happen — drag to hold and read, release and it rolls again">
-          <div class="ticker-track" id="tickerTrack"></div>
-        </div>
-        <div class="dim" style="font-size:10px; font-family:'JetBrains Mono',monospace;">ROLLING SLOW · DRAG TO HOLD &amp; READ · LET GO AND IT ROLLS AGAIN</div>
+        <div class="chart-box" style="margin-top:6px;"><canvas id="feedChart" height="148" role="img" aria-label="Streaming chart of our own desks' buy and sell orders only"></canvas></div>
+        <div id="feedLast" style="margin-top:6px; font-size:11.5px; font-family:'JetBrains Mono',monospace;" class="bonedim">waiting for the first desk order…</div>
+        <div class="dim" style="font-size:10px; font-family:'JetBrains Mono',monospace; margin-top:3px;">▲ BUY · GREEN ABOVE THE LINE&nbsp;&nbsp;▼ SELL · RED BELOW&nbsp;&nbsp;·&nbsp;&nbsp;LINE = RUNNING BUY − SELL BALANCE OF DESK ORDERS</div>
       </section>
 
 
@@ -626,8 +636,22 @@
           <div class="stream-chip" id="stageStream" data-state="connecting" role="status" aria-label="Stage chart stream status"><span class="sc-dot"></span><span id="stageStreamTxt">stream · connecting…</span></div>
         </section>
 
+      <!-- ============ THE TAPE · DIRECTLY BELOW THE STAGE ============ -->
+      <section class="panel" data-live-chrome style="padding:10px 12px; margin-bottom:10px;" aria-label="The tape — our own desks' trade events off the event bus: entries, take-profits, stops and exits, each labelled with its desk">
+        <div class="sec-head">
+          <span class="sec-title">THE TAPE · OUR DESKS' TRADES</span>
+          <span class="dim" id="tapeState" style="font-size:11px;">reading the event bus…</span>
+          <button id="tapePause" class="ctl-btn" aria-pressed="false" style="margin-left:auto;">PAUSE</button>
+        </div>
+        <div id="printTape" style="margin-top:4px;"></div>
+        <div class="ticker-wrap" id="tickerWrap" style="margin:8px 0 4px;" aria-label="Desk events as they happen — drag to hold and read, release and it rolls again">
+          <div class="ticker-track" id="tickerTrack"></div>
+        </div>
+        <div class="dim" style="font-size:10px; font-family:'JetBrains Mono',monospace;">ROLLING SLOW · DRAG TO HOLD &amp; READ · LET GO AND IT ROLLS AGAIN</div>
+      </section>
+
       <!-- ============ SYSTEM ACTIVITY · BING BING BING ============ -->
-      <section class="panel act-panel" data-live-chrome aria-label="System activity log — desk events landing live, between the balance and the chart">
+      <section class="panel act-panel" data-live-chrome aria-label="System activity log — desk events landing live">
         <div class="sec-head">
           <span class="sec-title">SYSTEM ACTIVITY</span>
           <span class="bing-pop" id="bingPop" hidden>&#9834; BING</span>
@@ -2515,7 +2539,7 @@
         Array.prototype.forEach.call(document.querySelectorAll("[data-live-chrome]"), function (b) {
           b.hidden = name !== "live";
         });
-        if (name === "live") { requestAnimationFrame(function () { drawStage(); drawExplorer(); drawVortex(); }); }
+        if (name === "live") { requestAnimationFrame(function () { drawStage(); drawExplorer(); drawVortex(); if (typeof drawFeedChart === "function") drawFeedChart(); }); }
         if (name === "ecosystem") { requestAnimationFrame(function () { ecoTabShown(); }); }
         renderAll(); /* the tab just revealed paints from the same LS, same values as every other tab */
       }
@@ -2556,19 +2580,41 @@
         var b1 = Math.floor(tms / 60000) * 60000, st1 = storeFor(sym, 60), e1 = st1.map.get(b1);
         if (e1) { e1.h = Math.max(e1.h, price); e1.l = Math.min(e1.l, price); e1.c = price; e1.v += size || 0; }
       }
+      /* fold one live price into the forming candle of every timeframe
+         the charts can show — called on EVERY price update (trade,
+         ticker or poll), so the forming candle and the last-price line
+         move on every tick at every timeframe, 1S and 30S included,
+         instead of waiting for the next trade print or kline push.
+         Before this, ticker ticks updated the badge numbers only and
+         the candle itself stood still between prints — the frozen 1M
+         chart. Larger timeframes fold the same way once their store
+         holds history; an empty store is left for the seed to fill. */
+      function tickCandle(sym, px, tms) {
+        addTrade(sym, px, 0, tms);
+        [300, 900, 3600].forEach(function (tf) {
+          var b = Math.floor(tms / (tf * 1000)) * tf * 1000;
+          var st = storeFor(sym, tf), ex = st.map.get(b);
+          if (ex) { ex.h = Math.max(ex.h, px); ex.l = Math.min(ex.l, px); ex.c = px; }
+          else if (st.arr.length) { st.map.set(b, { t: b, o: px, h: px, l: px, c: px, v: 0 }); st.arr = Array.from(st.map.values()).sort(function (a, b2) { return a.t - b2.t; }); }
+        });
+      }
 
       /* ---------------- chart drawing ----------------
-         Both main charts share one price kit: a right-side gutter carrying
-         gridline price labels plus the level tags (TP / ENTRY from the
-         payload, STOP recorded or derived from the frozen SL_PCT rule and
-         labelled as the rule, LAST always). Every tag is a solid pill,
-         and the pills are stacked with a minimum pitch so they can never
-         print on top of each other or the axis labels. The scale is built
-         from the visible candles plus the current price; a level far
-         outside that band pins to the gutter edge with an arrow instead of
-         stretching the scale flat. A long-press crosshair rides the same
-         kit. Grid mini-charts keep the compact form: level pills only, no
-         axis. */
+         Both main charts share one price kit with TWO separate right-side
+         strips: an axis strip carrying only the gridline price numbers,
+         and a label strip beside it carrying the level tags (TP / ENTRY
+         from the payload, STOP recorded or derived from the frozen
+         SL_PCT rule and labelled as the rule, LAST always) — each tag a
+         two-line block (name over price) aligned to its level, whose
+         line runs across the plot at the level's true price. Tags stack
+         at a minimum pitch inside their own strip, so they can never
+         print on top of each other or cover a price-scale number; a
+         level far outside the scale pins its tag to the label strip's
+         edge with an arrow instead of stretching the scale flat, and the
+         axis stays whole. The forming candle and the LAST line update on
+         every tick (see tickCandle). A long-press crosshair rides the
+         same kit, its price tag also living in the label strip. Grid
+         mini-charts keep the compact form: level pills only, no axis. */
       var zoomBars = { stageChart: null, expChart: null }; /* pinch/wheel zoom: candles shown per chart, null = automatic fit */
       var panBars = { stageChart: 0, expChart: 0 }; /* candles panned back from the live edge (quick drag when zoomed) */
       var crossHair = { stageChart: null, expChart: null }; /* held long-press crosshair {x, y} in css px, per chart — named crossHair, NOT crossState: crossState(sym) is the TP/stop-cross function above, and sharing the name let this assignment overwrite it mid-init, which aborted the init sequence before initStamps() and the shared stamp tick ever registered */
@@ -2634,28 +2680,28 @@
         if (levelsSym && lposAny) {
           var lpos = lposAny;
           var tpv = num(lpos.tp_quote), env = num(lpos.entry_price), slv = posStop(lpos);
-          if (tpv != null) levels.push({ p: tpv, c: "#2dff9f", t: lpos._tpRule ? "TP " + (lpos.side === "short" ? "−" : "+") + (SL_PCT * 100).toFixed(2) + "% RULE" : "TP " + fmtPrice(tpv), dash: [], tp: true });
-          if (env != null) levels.push({ p: env, c: "#a78bfa", t: "ENTRY " + fmtPrice(env), dash: [5, 4] });
-          if (slv != null) levels.push({ p: slv, c: "#ff4d6d", t: "STOP " + fmtPrice(slv), dash: [2, 3], stop: true });
+          if (tpv != null) levels.push({ p: tpv, c: "#2dff9f", t: lpos._tpRule ? "TP " + (lpos.side === "short" ? "−" : "+") + (SL_PCT * 100).toFixed(2) + "% RULE" : "TP " + fmtPrice(tpv), n: lpos._tpRule ? "TP RULE" : "TP", v: lpos._tpRule ? (lpos.side === "short" ? "−" : "+") + (SL_PCT * 100).toFixed(2) + "%" : fmtPrice(tpv), dash: [], tp: true });
+          if (env != null) levels.push({ p: env, c: "#a78bfa", t: "ENTRY " + fmtPrice(env), n: "ENTRY", v: fmtPrice(env), dash: [5, 4] });
+          if (slv != null) levels.push({ p: slv, c: "#ff4d6d", t: "STOP " + fmtPrice(slv), n: "STOP", v: fmtPrice(slv), dash: [2, 3], stop: true });
           else {
             var rsv = ruleStop(lpos);
-            if (rsv != null) levels.push({ p: rsv, c: "#ff4d6d", t: ruleStopLabel(lpos), dash: [2, 3], stop: true, rule: true });
+            if (rsv != null) levels.push({ p: rsv, c: "#ff4d6d", t: ruleStopLabel(lpos), n: "STOP RULE", v: (lpos.side === "short" ? "+" : "−") + (SL_PCT * 100).toFixed(2) + "%", dash: [2, 3], stop: true, rule: true });
           }
         }
-        /* the live current price rides the same right-side gutter, position
-           or not — its tag and line update with the stream. The scale is
+        /* the live current price rides the same label strip, position
+           or not — its tag and line update on every tick. The scale is
            built from the visible candles plus the current price; a level
            joins the scale only when it sits near that band (within 30% of
            the band's height past either edge). A level farther away pins
            to the gutter edge it lies beyond, arrow and all, so zooming in
            keeps the candles full-size instead of squashed by a distant
            entry or stop. */
-        var G = 0, PW = W;
+        var G = 0, AX = 0, PW = W;
         var cp = null;
         if (levelsSym) {
           cp = priceOf(levelsSym); if (cp == null) cp = arr[arr.length - 1].c;
           if (cp != null) {
-            levels.push({ p: cp, c: "#ffffff", t: "LAST " + fmtPrice(cp), dash: [], last: true });
+            levels.push({ p: cp, c: "#ffffff", t: "LAST " + fmtPrice(cp), n: "LAST", v: fmtPrice(cp), dash: [], last: true });
             if (cp < lo) lo = cp; if (cp > hi) hi = cp;
           }
           var band = Math.max((hi - lo) * 0.3, Math.abs(hi || 1) * 1e-9);
@@ -2666,13 +2712,25 @@
             else L.edge = L.p > hi ? "up" : "down";
           });
           if (levels.length) {
-            /* the plot squeezes left by exactly the width the widest tag
-               needs, so every tag sits fully inside the gutter strip */
+            /* two strips on the right, each with one job: the AXIS strip
+               carries only the gridline price numbers, and the LABEL
+               strip beside it carries the level tags — so a tag can never
+               sit on, cover, or blank out a price-scale number. The plot
+               squeezes left by exactly the width the two strips need.
+               Mini charts keep the single compact tag strip. */
             ctx.font = "700 10px 'JetBrains Mono', monospace";
             var mw = 0;
             levels.forEach(function (L) { mw = Math.max(mw, ctx.measureText(L.t).width + (L.edge ? 13 : 0)); });
-            G = Math.max(66, Math.min(132, Math.ceil(mw) + 14));
-            PW = W - G;
+            if (isMain) {
+              AX = 58;
+              var lw = 0;
+              ctx.font = "800 9px 'JetBrains Mono', monospace";
+              levels.forEach(function (L) { lw = Math.max(lw, ctx.measureText(L.n).width, ctx.measureText(L.v).width); });
+              G = Math.max(62, Math.min(104, Math.ceil(lw) + 14));
+            } else {
+              G = Math.max(66, Math.min(132, Math.ceil(mw) + 14));
+            }
+            PW = W - AX - G;
           }
         }
         if (!(hi > lo)) { hi = lo * 1.001 + 1e-9; lo = lo * 0.999; }
@@ -2689,62 +2747,77 @@
           ctx.beginPath(); ctx.moveTo(x, y(c.h)); ctx.lineTo(x, y(c.l)); ctx.stroke();
           var t = y(Math.max(c.o, c.c)), b = y(Math.min(c.o, c.c));
           ctx.fillRect(x - bw / 2, t, bw, Math.max(1, b - t));
+          if (i === vis.length - 1 && !(cv.id && panBars[cv.id] > 0)) {
+            /* the forming candle is outlined so its tick-by-tick growth
+               reads at a glance — it is redrawn on every tick */
+            ctx.strokeStyle = up ? "rgba(45,255,159,0.95)" : "rgba(255,77,109,0.95)";
+            ctx.lineWidth = 1.4;
+            ctx.strokeRect(x - bw / 2, t, bw, Math.max(1, b - t));
+            ctx.lineWidth = 1;
+          }
         });
-        /* the gutter strip: a clear band beside the plot where the price
-           tags live — outside the candles, always fully readable */
+        /* the right-hand strips: the axis strip (price numbers only)
+           and, for the main charts, the label strip beside it (level
+           tags only) — outside the candles, always fully readable */
+        var LX = PW + AX; /* the label strip's left edge */
         if (G) {
           ctx.fillStyle = "rgba(167,139,250,0.06)";
-          ctx.fillRect(PW, 0, G, H);
+          ctx.fillRect(LX, 0, G, H);
           ctx.strokeStyle = "rgba(167,139,250,0.28)"; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(PW + 0.5, 0); ctx.lineTo(PW + 0.5, H); ctx.stroke();
+          if (AX) { ctx.beginPath(); ctx.moveTo(LX + 0.5, 0); ctx.lineTo(LX + 0.5, H); ctx.stroke(); }
         }
-        /* tag layout: every level gets a solid pill in the gutter, and the
-           pills are stacked at a minimum 17px pitch so TP / ENTRY / LAST /
-           STOP can never print on top of each other, however close their
-           prices sit. A pill pushed off its price keeps a leader tick back
-           to its line's true height; an off-scale level pins to the top or
-           bottom of the gutter and carries an arrow. Only when no stop can
-           be shown at all — no recorded stop and no entry/side to derive
-           the rule stop from — does the STOP — slot reserve the gutter's
+        /* tag layout: every level gets a solid tag in the LABEL strip,
+           stacked at a minimum pitch so TP / ENTRY / LAST / STOP can
+           never print on top of each other, however close their prices
+           sit. A tag pushed off its price keeps a marker at its line's
+           true height on the axis strip's edge plus a leader across the
+           label strip; an off-scale level pins its tag to the top or
+           bottom of the label strip and carries an arrow — the axis
+           strip is never touched. Only when no stop can be shown at
+           all — no recorded stop and no entry/side to derive the rule
+           stop from — does the STOP — slot reserve the label strip's
            foot so the stack yields to it too. */
         var stopSlot = !!(G && levelsSym && lposAny && !levels.some(function (L) { return L.stop; }));
+        var tagH = isMain ? 25 : 16, tagPitch = isMain ? 27 : 17;
         var tags = [];
         if (G) {
-          var yTop = 9, yBot = H - (stopSlot ? 27 : 9);
+          var yTop = tagH / 2 + 1, yBot = H - (stopSlot ? tagH + 4 : tagH / 2 + 1);
           levels.forEach(function (L) {
             var ty = L.edge === "up" ? yTop : L.edge === "down" ? yBot : y(L.p);
             tags.push({ L: L, ty: ty, dy: ty });
           });
           tags.sort(function (a, b) { return a.dy - b.dy; });
-          for (var ti = 1; ti < tags.length; ti++) tags[ti].dy = Math.max(tags[ti].dy, tags[ti - 1].dy + 17);
+          for (var ti = 1; ti < tags.length; ti++) tags[ti].dy = Math.max(tags[ti].dy, tags[ti - 1].dy + tagPitch);
           if (tags.length && tags[tags.length - 1].dy > yBot) {
             tags[tags.length - 1].dy = yBot;
-            for (var tj = tags.length - 2; tj >= 0; tj--) tags[tj].dy = Math.min(tags[tj].dy, tags[tj + 1].dy - 17);
+            for (var tj = tags.length - 2; tj >= 0; tj--) tags[tj].dy = Math.min(tags[tj].dy, tags[tj + 1].dy - tagPitch);
           }
           if (tags.length && tags[0].dy < yTop) {
             var sh = yTop - tags[0].dy;
             tags.forEach(function (tg) { tg.dy += sh; });
           }
         }
-        /* price axis: one readable label in the gutter per gridline, priced
-           off the same scale the candles were drawn with, so every candle
-           sits against a real price — a label yields when a level pill
-           sits at its height, so the two never print over each other */
-        if (isMain && G) {
+        /* price axis: one readable label in the AXIS strip per gridline,
+           priced off the same scale the candles were drawn with, so every
+           candle sits against a real price. The axis strip belongs to
+           these numbers alone — every gridline label always draws, none
+           ever yields to or hides behind a level tag */
+        if (isMain && AX) {
           ctx.font = "700 9.5px 'JetBrains Mono', monospace";
           ctx.fillStyle = "rgba(195,184,234,0.92)";
+          ctx.textAlign = "right";
           for (var g2 = 1; g2 <= gridN; g2++) {
             var gy2 = H * g2 / (gridN + 1);
-            var nearTag = false;
-            for (var nt = 0; nt < tags.length; nt++) { if (Math.abs(tags[nt].dy - gy2) < 10) { nearTag = true; break; } }
-            if (nearTag) continue;
             var gp = lo + (H - gy2) / H * (hi - lo);
-            ctx.fillText(fmtPrice(gp), PW + 6, gy2 + 3);
+            ctx.fillText(fmtPrice(gp), PW + AX - 5, gy2 + 3);
           }
+          ctx.textAlign = "left";
         }
         /* level lines span the plot at their true price — in-scale levels
-           only; an off-scale level draws no line, its pinned pill carries
-           the arrow instead. Nothing is drawn over the candles. */
+           only; an off-scale level draws no line, its pinned tag in the
+           label strip carries the arrow instead. Nothing is drawn over
+           the candles or the axis numbers. */
         levels.forEach(function (L) {
           if (L.edge) return;
           var ly = y(L.p);
@@ -2754,13 +2827,16 @@
           ctx.beginPath(); ctx.moveTo(0, ly); ctx.lineTo(PW, ly); ctx.stroke();
           ctx.setLineDash([]); ctx.globalAlpha = 1;
         });
-        /* the pills: a solid fill in the level's own colour with dark text
-           — the treatment the LAST tag always had, now on every tag, so no
-           label ever prints bare over the candles or the axis numbers */
+        /* the tags: a solid fill in the level's own colour with dark text
+           — the treatment the LAST tag always had, now on every tag. On
+           the main charts each tag is two lines (level name over its
+           price) living in the LABEL strip beside the axis; mini charts
+           keep the compact one-line pill in their single strip. No tag
+           ever prints bare over the candles or the axis numbers */
         if (G) {
           ctx.font = "700 10px 'JetBrains Mono', monospace";
           /* tick flash: when the live price has actually moved since the
-             last draw on this canvas, the LAST pill flashes the tick's
+             last draw on this canvas, the LAST tag flashes the tick's
              colour for a beat and its edge dot gets a ring — movement you
              can see, driven only by real ticks, never by a timer */
           var tk = cv._tk || (cv._tk = { p: null, dir: 0, at: 0 });
@@ -2770,15 +2846,29 @@
           }
           var flash = tk.dir !== 0 && Date.now() - tk.at < 700;
           tags.forEach(function (tg) {
-            var L = tg.L, txt = L.t + (L.edge === "up" ? " ↑" : L.edge === "down" ? " ↓" : "");
-            var tw = ctx.measureText(txt).width;
-            if (Math.abs(tg.dy - tg.ty) > 2) {
-              ctx.strokeStyle = L.c; ctx.globalAlpha = 0.75; ctx.lineWidth = 1;
-              ctx.beginPath(); ctx.moveTo(PW - 4, tg.ty); ctx.lineTo(PW + 3, tg.dy); ctx.stroke();
+            var L = tg.L;
+            var arrow = L.edge === "up" ? " ↑" : L.edge === "down" ? " ↓" : "";
+            /* a tag pushed off its level's true height keeps a marker at
+               that height on the axis strip's right edge plus a leader
+               across the label strip to the tag — the axis numbers
+               themselves stay untouched */
+            if (Math.abs(tg.dy - tg.ty) > 2 || L.edge) {
+              ctx.strokeStyle = L.c; ctx.globalAlpha = 0.8; ctx.lineWidth = 1;
+              ctx.beginPath(); ctx.moveTo(LX - 3, tg.ty); ctx.lineTo(LX + 1, tg.ty); ctx.stroke();
+              ctx.globalAlpha = 0.55;
+              ctx.beginPath(); ctx.moveTo(LX + 1, tg.ty); ctx.lineTo(LX + 3, tg.dy); ctx.stroke();
               ctx.globalAlpha = 1;
             }
+            var tw;
+            if (isMain) {
+              ctx.font = "800 9px 'JetBrains Mono', monospace";
+              tw = Math.max(ctx.measureText(L.n + arrow).width, ctx.measureText(L.v).width);
+            } else {
+              ctx.font = "700 10px 'JetBrains Mono', monospace";
+              tw = ctx.measureText(L.t + arrow).width;
+            }
             if (L.tp && levelsSym && lposAny && !fired[levelsSym] && !closedBook[levelsSym]) {
-              /* near-miss glow: the TP pill breathes green while the live
+              /* near-miss glow: the TP tag breathes green while the live
                  price sits within ~5 bps of the level, faster the closer
                  it gets — a pure display of the real live distance; it
                  stops the moment the level banks or price moves away */
@@ -2789,19 +2879,27 @@
                 ctx.shadowColor = "rgba(45,255,159," + (0.5 + 0.45 * gpulse).toFixed(2) + ")";
                 ctx.shadowBlur = 12 + 16 * gpulse;
                 ctx.fillStyle = "#2dff9f";
-                pillPath(ctx, PW + 1, tg.dy - 9, tw + 11, 18, 5);
+                pillPath(ctx, LX + 1, tg.dy - tagH / 2 - 1, tw + 11, tagH + 2, 5);
                 ctx.fill();
                 ctx.restore();
               }
             }
             ctx.fillStyle = L.last && flash ? (tk.dir > 0 ? "#2dff9f" : "#ff4d6d") : L.c;
-            pillPath(ctx, PW + 2, tg.dy - 8, tw + 9, 16, 4);
+            pillPath(ctx, LX + 2, tg.dy - tagH / 2, tw + 9, tagH, 4);
             ctx.fill();
             ctx.fillStyle = "#0b0618";
-            ctx.fillText(txt, PW + 6, tg.dy + 3.5);
+            if (isMain) {
+              ctx.font = "800 9px 'JetBrains Mono', monospace";
+              ctx.fillText(L.n + arrow, LX + 6, tg.dy - 1.5);
+              ctx.font = "700 9px 'JetBrains Mono', monospace";
+              ctx.fillText(L.v, LX + 6, tg.dy + 8.5);
+            } else {
+              ctx.font = "700 10px 'JetBrains Mono', monospace";
+              ctx.fillText(L.t + arrow, LX + 6, tg.dy + 3.5);
+            }
             if (L.last) {
               /* the dot stays at the price's true height on the plot's
-                 right edge even when the pill itself was stacked aside */
+                 right edge even when the tag itself was stacked aside */
               ctx.fillStyle = L.c;
               ctx.beginPath(); ctx.arc(Math.max(2, PW - 2), tg.ty, 2.4, 0, 6.2832); ctx.fill();
               if (flash && !REDUCED) {
@@ -2814,24 +2912,26 @@
           /* STOP slot: when the focused position has neither a recorded
              stop nor an entry/side the rule stop can be derived from,
              there is no line to align to, so the slot sits at the foot of
-             the gutter as an outlined pill showing —, never an invented
+             the label strip as an outlined tag showing —, never an invented
              price. With no position focused there is no slot at all —
              the badge row keeps the honest dash instead. */
           if (stopSlot) {
+            ctx.font = isMain ? "800 9px 'JetBrains Mono', monospace" : "700 10px 'JetBrains Mono', monospace";
             var sw = ctx.measureText("STOP —").width + 9;
+            var sy2 = isMain ? H - tagH - 2 : H - 17, sh2 = isMain ? tagH : 16;
             ctx.fillStyle = "rgba(255,77,109,0.16)";
-            pillPath(ctx, PW + 2, H - 17, sw, 16, 4); ctx.fill();
+            pillPath(ctx, LX + 2, sy2, sw, sh2, 4); ctx.fill();
             ctx.strokeStyle = "rgba(255,77,109,0.65)"; ctx.lineWidth = 1;
-            pillPath(ctx, PW + 2, H - 17, sw, 16, 4); ctx.stroke();
+            pillPath(ctx, LX + 2, sy2, sw, sh2, 4); ctx.stroke();
             ctx.fillStyle = "#ff8fa5";
-            ctx.fillText("STOP —", PW + 6, H - 5.5);
+            ctx.fillText("STOP —", LX + 6, sy2 + sh2 / 2 + 3.5);
           }
         }
         /* geometry the gesture layer pans against */
         if (cv.id) chartGeom[cv.id] = { step: step, total: arr.length };
         /* crosshair: while a long-press is held, guide lines follow the
            finger — vertical snapped to the touched candle, horizontal at
-           the fingertip — a filled violet tag in the gutter reads the exact
+           the fingertip — a filled violet tag in the label strip reads the exact
            price under the fingertip (touch a candle's wick low and the tag
            reads that low), and the readout chip carries the candle's full
            open / high / low / close and its time */
@@ -2850,12 +2950,14 @@
           ctx.beginPath(); ctx.moveTo(0, cyp); ctx.lineTo(PW, cyp); ctx.stroke();
           ctx.setLineDash([]);
           if (G) {
+            /* the held price reads in the label strip too — never over
+               the axis numbers it sits beside */
             ctx.font = "700 10px 'JetBrains Mono', monospace";
             var ft = fmtPrice(fp), ftw = ctx.measureText(ft).width;
             ctx.fillStyle = "#6d28d9";
-            ctx.fillRect(PW + 2, cyp - 8, ftw + 8, 16);
+            ctx.fillRect(LX + 2, cyp - 8, Math.min(ftw + 8, G - 3), 16);
             ctx.fillStyle = "#ffffff";
-            ctx.fillText(ft, PW + 6, cyp + 3);
+            ctx.fillText(ft, LX + 6, cyp + 3);
           }
           if (chip) {
             var cd = new Date(cc.t);
@@ -3432,6 +3534,16 @@
         checkTp(sym, prev, px);
         checkStop(sym, prev, px);
         prevPx[sym] = px;
+        /* every price update moves the charts it belongs to: fold the
+           tick into the forming candles and redraw on this very tick.
+           Ticker ticks are the most frequent price updates there are —
+           routing them here is what makes the forming candle and the
+           LAST line move continuously at every timeframe */
+        if (sym === stage.sym || sym === explorer.sym || (stage.view === "grid" && gridSyms().indexOf(sym) >= 0)) {
+          tickCandle(sym, px, Date.now());
+          drawSoon();
+          if (stage.view === "grid") drawGridSoon();
+        }
         if (sym === stage.sym) { updateBadges(); if (stage.view === "grid") drawGridSoon(); }
         if (sym === explorer.sym) updateExpHeader();
       }
@@ -3493,25 +3605,79 @@
          on the book prepend through tapeLive, down the same event path
          as the firehose; fireworks and bings still fire only on those
          real desk events, never on market prints, never on timers. */
+      /* the order facts a desk event carries: the feed stamps side, price
+         and size on its order events, and the tape + feed chart carry all
+         three through. Where a field is absent the page reads only the
+         desk's own words — the price its reason states, the side its own
+         fill decision recorded on the why-board (same desk, same symbol,
+         same print cluster) — never an invented value: a side that is
+         nowhere stated stays null and plots as a neutral print. */
+      function evNum() { for (var i = 0; i < arguments.length; i++) { var v = num(arguments[i]); if (v != null) return v; } return null; }
+      function evSideWord(s) {
+        s = String(s || "").toLowerCase();
+        if (s === "buy" || s === "long" || s === "bid") return "buy";
+        if (s === "sell" || s === "short" || s === "ask") return "sell";
+        return null;
+      }
+      var WHY_FILLS = [];
+      ((P.why_board && P.why_board.desks) || []).forEach(function (d) {
+        (d.reasons || []).forEach(function (r) {
+          if (r && r.decision_type === "fill") { var sw = evSideWord(r.side); if (sw) WHY_FILLS.push({ ts: num(r.ts_ms), desk: d.desk || "", sym: r.instrument || "", side: sw }); }
+        });
+      });
+      function evSideOf(raw, desk, symbol, kind, reason, ts) {
+        var s = raw ? evSideWord(raw.side || raw.order_side || raw.direction) : null;
+        if (s) return s;
+        var m = /\b(LONG|SHORT)\b/.exec(String(reason || ""));
+        if (m) {
+          var isEntry = kind === "fill";
+          return m[1] === "LONG" ? (isEntry ? "buy" : "sell") : (isEntry ? "sell" : "buy");
+        }
+        var best = null, bestDt = 2600;
+        WHY_FILLS.forEach(function (f) {
+          if (f.sym !== symbol || (desk && f.desk !== desk)) return;
+          var dt = Math.abs((f.ts || 0) - (ts || 0));
+          if (dt < bestDt) { bestDt = dt; best = f.side; }
+        });
+        if (best) return best;
+        bestDt = 150;
+        WHY_FILLS.forEach(function (f) {
+          if (f.sym !== symbol) return;
+          var dt = Math.abs((f.ts || 0) - (ts || 0));
+          if (dt < bestDt) { bestDt = dt; best = f.side; }
+        });
+        return best;
+      }
+      function evPriceOf(raw, reason) {
+        var p = raw ? evNum(raw.price, raw.px, raw.fill_price, raw.exec_price) : null;
+        if (p != null) return p;
+        var r = String(reason || "");
+        var m = /(?:exit|filled|fill|touch|quote|mid|entry)\s*@?\s*\$?\s*([\d][\d,]*\.?\d*)/i.exec(r) || /@\s*\$?\s*([\d][\d,]*\.?\d*)/.exec(r);
+        if (m) { var v = parseFloat(m[1].replace(/,/g, "")); if (isFinite(v) && v > 0) return v; }
+        return null;
+      }
+      function evSizeOf(raw) { return raw ? evNum(raw.size, raw.qty, raw.quantity, raw.amount) : null; }
       var TAPE_EVENTS = (function () {
         var out = [], seen = {};
-        function add(ts, desk, symbol, kind, reason) {
+        function add(ts, desk, symbol, kind, reason, raw) {
           if (ts == null || !isFinite(ts)) return;
           var k = String(kind || "");
           if (k !== "fill" && k !== "exit" && k !== "exit_quote" && k !== "tp_hit") return;
           var key = ts + "|" + (symbol || "") + "|" + k + "|" + String(reason || "").slice(0, 40);
           if (seen[key]) return;
           seen[key] = 1;
-          out.push({ ts: ts, desk: desk || "", symbol: symbol || "", kind: k, reason: reason || "" });
+          out.push({ ts: ts, desk: desk || "", symbol: symbol || "", kind: k, reason: reason || "",
+            side: evSideOf(raw, desk || "", symbol || "", k, reason || "", ts),
+            price: evPriceOf(raw, reason || ""), size: evSizeOf(raw) });
         }
         ((P.event_bus && P.event_bus.last_events) || []).forEach(function (e) {
-          add(num(e.ts_ms) != null ? e.ts_ms : num(e.ts), e.desk || e.source, e.symbol, e.kind, e.reason);
+          add(num(e.ts_ms) != null ? e.ts_ms : num(e.ts), e.desk || e.source, e.symbol, e.kind, e.reason, e);
         });
         var headDesk = (P.desks && P.desks.crypto && P.desks.crypto.desk_id) || "TD-001";
-        (P.events || []).forEach(function (e) { add(num(e.ts), e._desk || headDesk, e.symbol, e.kind, e.reason); });
+        (P.events || []).forEach(function (e) { add(num(e.ts), e._desk || headDesk, e.symbol, e.kind, e.reason, e); });
         function scanEvents(sec, deskFallback) {
           if (!sec || typeof sec !== "object" || !Array.isArray(sec.events)) return;
-          sec.events.forEach(function (e) { add(num(e.ts) != null ? e.ts : num(e.ts_ms), sec.desk_id || deskFallback, e.symbol, e.kind, e.reason); });
+          sec.events.forEach(function (e) { add(num(e.ts) != null ? e.ts : num(e.ts_ms), sec.desk_id || deskFallback, e.symbol, e.kind, e.reason, e); });
         }
         Object.keys(P).forEach(function (k) { scanEvents(P[k], k); });
         if (P.desks) Object.keys(P.desks).forEach(function (k) { scanEvents(P.desks[k], headDesk); });
@@ -3528,11 +3694,12 @@
       function tapeRowHtml(ev) {
         var k = tapeKindOf(ev);
         var nm = deskName(ev.desk);
-        return '<div class="fh-row"><span class="fh-kind ' + k[1] + '">' + k[0] + "</span>" +
-          '<span class="fh-time">' + fmtClock(ev.ts) + "</span>" +
-          '<span class="fh-sym">' + esc(ev.symbol || "") + "</span>" +
+        return '<div class="tape-row"><div class="tape-meta"><span class="fh-kind ' + k[1] + '">' + k[0] + "</span>" +
+          '<span class="tape-time">' + fmtClock(ev.ts) + "</span>" +
+          '<span class="tape-sym">' + esc(ev.symbol || "") + "</span>" +
           (nm ? '<span class="tape-desk" title="' + esc(ev.desk || "") + '">' + esc(nm) + "</span>" : "") +
-          '<span class="fh-reason">' + esc(ev.reason || "") + "</span></div>";
+          "</div>" +
+          '<span class="tape-reason">' + esc(ev.reason || "") + "</span></div>";
       }
       var tapeLiveRows = [];
       function renderTape() {
@@ -3541,6 +3708,7 @@
         $("tapeState").textContent = tapePaused ? "tape held" : (TAPE_EVENTS.length + tapeLiveRows.length) + " OF OUR DESKS' OWN EVENTS · EVENT BUS";
       }
       function tapeLive(ev) {
+        if (typeof feedLivePrint === "function") feedLivePrint(ev);
         if (tapePaused) return;
         var headDesk = (P.desks && P.desks.crypto && P.desks.crypto.desk_id) || "TD-001";
         tapeLiveRows.unshift(tapeRowHtml({ ts: ev.ts || Date.now(), desk: headDesk, symbol: ev.symbol, kind: ev.kind, reason: ev.reason }));
@@ -3554,6 +3722,103 @@
         this.textContent = tapePaused ? "RESUME" : "PAUSE";
         renderTape();
       });
+
+      /* ---------------- THE FEED CHART: our desks' orders, streamed ----------------
+         The chart in the slot under the balance card. Its prints come ONLY
+         from our desks' own order events — the same TAPE_EVENTS stream the
+         tape below the stage renders, each print carrying the order's
+         side, price and size, plus live closes the page itself witnesses
+         on the book. The external market print stream is NEVER plotted
+         here; it stays where it belongs, as candle-chart background.
+         Buys plot above the centre line, sells below it; the line through
+         the middle is the running buy − sell balance of desk orders.
+         Snapshot prints stream in in their real time order; a live desk
+         order lands on the chart the moment it happens. */
+      var feedPrints = TAPE_EVENTS.slice().reverse().map(function (ev) {
+        return { ts: ev.ts, desk: ev.desk, symbol: ev.symbol, kind: ev.kind, side: ev.side, price: ev.price, size: ev.size };
+      });
+      var feedShown = Math.min(feedPrints.length, 4), feedPhase = 0;
+      function feedLivePrint(ev) {
+        var ts = ev.ts || Date.now();
+        feedPrints.push({ ts: ts, desk: ev.desk || (P.desks && P.desks.crypto && P.desks.crypto.desk_id) || "TD-001", symbol: ev.symbol || "", kind: ev.kind || "",
+          side: evSideOf(ev, ev.desk || "", ev.symbol || "", ev.kind || "", ev.reason || "", ts),
+          price: evPriceOf(ev, ev.reason || ""), size: evSizeOf(ev) });
+        if (feedPrints.length > 90) feedPrints.splice(0, feedPrints.length - 90);
+        feedShown = feedPrints.length;
+        drawFeedChart();
+      }
+      function drawFeedChart() {
+        var cv = $("feedChart"); if (!cv) return;
+        var f = fitCanvas(cv, 148), ctx = f.ctx, W = f.w, H = f.h;
+        ctx.clearRect(0, 0, W, H);
+        var midY = H / 2, lane = H * 0.30;
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(167,139,250,0.30)";
+        ctx.beginPath(); ctx.moveTo(0, midY + 0.5); ctx.lineTo(W, midY + 0.5); ctx.stroke();
+        ctx.strokeStyle = "rgba(167,139,250,0.10)";
+        ctx.beginPath(); ctx.moveTo(0, H * 0.25 + 0.5); ctx.lineTo(W, H * 0.25 + 0.5); ctx.moveTo(0, H * 0.75 + 0.5); ctx.lineTo(W, H * 0.75 + 0.5); ctx.stroke();
+        ctx.font = "700 8.5px 'JetBrains Mono',monospace";
+        ctx.fillStyle = "rgba(45,255,159,0.55)"; ctx.fillText("BUY", 2, 11);
+        ctx.fillStyle = "rgba(255,77,109,0.55)"; ctx.fillText("SELL", 2, H - 4);
+        var pts = feedPrints.slice(0, feedShown);
+        if (!pts.length) {
+          ctx.font = "11px 'JetBrains Mono',monospace"; ctx.fillStyle = "rgba(200,190,235,0.6)";
+          ctx.fillText("waiting for our desks' first order on this snapshot…", 10, midY - 8);
+          return;
+        }
+        var t0 = pts[0].ts, t1 = pts[pts.length - 1].ts;
+        if (t1 - t0 < 1000) { t0 -= 500; t1 += 500; }
+        var padL = 6, padR = 12;
+        function X(ts) { return padL + (ts - t0) / (t1 - t0) * (W - padL - padR); }
+        /* running buy − sell balance of desk orders, through the middle band */
+        var bal = 0, maxBal = 1, bals = [];
+        pts.forEach(function (p) { bal += p.side === "buy" ? 1 : p.side === "sell" ? -1 : 0; bals.push(bal); if (Math.abs(bal) > maxBal) maxBal = Math.abs(bal); });
+        ctx.beginPath();
+        pts.forEach(function (p, i) {
+          var x = X(p.ts), y = midY - bals[i] / maxBal * (H * 0.30);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = "rgba(232,225,255,0.75)"; ctx.lineWidth = 1.4; ctx.stroke(); ctx.lineWidth = 1;
+        /* the prints themselves: stem from the rail, dot sized by order size when the feed carries it */
+        var maxSize = 0;
+        pts.forEach(function (p) { if (p.size && p.size > maxSize) maxSize = p.size; });
+        pts.forEach(function (p, i) {
+          var x = X(p.ts);
+          var jit = ((i * 37) % 13) - 6;
+          var y = p.side === "buy" ? midY - lane + jit : p.side === "sell" ? midY + lane + jit : midY;
+          var col = p.side === "buy" ? "45,255,159" : p.side === "sell" ? "255,77,109" : "157,107,255";
+          ctx.strokeStyle = "rgba(" + col + ",0.35)";
+          ctx.beginPath(); ctx.moveTo(x, midY); ctx.lineTo(x, y); ctx.stroke();
+          var r = p.size && maxSize ? 2.5 + 3.5 * Math.sqrt(p.size / maxSize) : 3.2;
+          ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832);
+          ctx.fillStyle = "rgb(" + col + ")"; ctx.fill();
+          if (i === pts.length - 1 && feedShown >= feedPrints.length) {
+            ctx.beginPath(); ctx.arc(x, y, r + 3 + feedPhase * 3.5, 0, 6.2832);
+            ctx.strokeStyle = "rgba(255,255,255," + Math.max(0.08, 0.5 - feedPhase * 0.42) + ")"; ctx.stroke();
+          }
+        });
+        var nb = 0, ns = 0;
+        feedPrints.forEach(function (p) { if (p.side === "buy") nb++; else if (p.side === "sell") ns++; });
+        var fsEl = $("feedState");
+        if (fsEl) fsEl.textContent = feedPrints.length + " OF OUR DESKS' OWN ORDERS · " + nb + " BUYS · " + ns + " SELLS · EVENT BUS";
+        var lp = pts[pts.length - 1], flEl = $("feedLast");
+        if (lp && flEl) {
+          var nm = deskName(lp.desk);
+          flEl.innerHTML = "LAST · " + (lp.side ? '<span class="tape-side ' + lp.side + '">' + (lp.side === "buy" ? "▲ BUY" : "▼ SELL") + "</span> " : "") +
+            "<b>" + esc(lp.symbol || "") + "</b>" +
+            (lp.price != null ? " @ " + fmtPrice(lp.price) : "") +
+            (lp.size != null ? " × " + esc(String(lp.size)) : "") +
+            (nm ? " · " + esc(nm) : "") + " · " + fmtClock(lp.ts);
+        }
+      }
+      drawFeedChart();
+      setInterval(function () {
+        if (document.hidden) return;
+        if (feedShown < feedPrints.length) feedShown = Math.min(feedPrints.length, feedShown + 1);
+        feedPhase = (feedPhase + 0.25) % 1;
+        drawFeedChart();
+      }, 450);
+      window.addEventListener("resize", drawFeedChart);
 
       /* ---------------- drawing ---------------- */
       var drawQueued = false;
@@ -3572,10 +3837,10 @@
       }
       function drawExplorer() {
         /* the explorer gets the full stage kit: passing its own symbol as
-           levelsSym gives it the price-axis gutter, the TP / ENTRY tags when
-           the desks hold the symbol, and the solid LAST line with its filled
-           gutter tag — the current price lives on the chart, not just in the
-           header */
+           levelsSym gives it the two-strip price kit (axis numbers in
+           their own strip, TP / ENTRY / LAST tags in the label strip
+           beside it) and the solid LAST line — the current price lives on
+           the chart, not just in the header */
         drawCandles($("expChart"), explorer.sym, stage.tf, 190, explorer.sym);
         $("expState").textContent = explorer.sym.replace("USDT", "/USDT") + " · " + TFS.filter(function (t) { return t[0] === stage.tf; })[0][1];
         updateExpHeader();
