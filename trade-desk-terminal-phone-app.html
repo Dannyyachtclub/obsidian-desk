@@ -2917,7 +2917,7 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         return { ctx: ctx, w: w, h: cssH };
       }
-      function drawCandles(cv, sym, tf, cssH, levelsSym) {
+      function drawCandles(cv, sym, tf, cssH, levelsSym, recordedOnly) {
         var f = fitCanvas(cv, cssH), ctx = f.ctx, W = f.w, H = f.h;
         ctx.clearRect(0, 0, W, H);
         var st = storeFor(sym, tf), arr = st.arr;
@@ -2940,10 +2940,16 @@
         if (levelsSym && lposAny) {
           var lpos = lposAny;
           var tpv = num(lpos.tp_quote), env = num(lpos.entry_price), slv = posStop(lpos);
-          if (tpv != null) levels.push({ p: tpv, c: "#2dff9f", t: lpos._tpRule ? "TP " + (lpos.side === "short" ? "−" : "+") + (SL_PCT * 100).toFixed(2) + "% RULE" : "TP " + fmtPrice(tpv), n: lpos._tpRule ? "TP RULE" : "TP", v: lpos._tpRule ? (lpos.side === "short" ? "−" : "+") + (SL_PCT * 100).toFixed(2) + "%" : fmtPrice(tpv), dash: [], tp: true });
+          /* recordedOnly (the explorer): a searched symbol earns a TP or a
+             stop ONLY from a level the payload actually recorded for a
+             real open position in it — the rule-derived TP and the SL_PCT
+             rule stop are never drawn there, so a token whose position
+             carries no recorded TP/SL (or that is not held at all) shows
+             none instead of an invented one */
+          if (tpv != null && !(recordedOnly && lpos._tpRule)) levels.push({ p: tpv, c: "#2dff9f", t: lpos._tpRule ? "TP " + (lpos.side === "short" ? "−" : "+") + (SL_PCT * 100).toFixed(2) + "% RULE" : "TP " + fmtPrice(tpv), n: lpos._tpRule ? "TP RULE" : "TP", v: lpos._tpRule ? (lpos.side === "short" ? "−" : "+") + (SL_PCT * 100).toFixed(2) + "%" : fmtPrice(tpv), dash: [], tp: true });
           if (env != null) levels.push({ p: env, c: "#a78bfa", t: "ENTRY " + fmtPrice(env), n: "ENTRY", v: fmtPrice(env), dash: [5, 4] });
           if (slv != null) levels.push({ p: slv, c: "#ff4d6d", t: "STOP " + fmtPrice(slv), n: "STOP", v: fmtPrice(slv), dash: [2, 3], stop: true });
-          else {
+          else if (!recordedOnly) {
             var rsv = ruleStop(lpos);
             if (rsv != null) levels.push({ p: rsv, c: "#ff4d6d", t: ruleStopLabel(lpos), n: "STOP RULE", v: (lpos.side === "short" ? "+" : "−") + (SL_PCT * 100).toFixed(2) + "%", dash: [2, 3], stop: true, rule: true });
           }
@@ -4189,8 +4195,11 @@
            levelsSym gives it the two-strip price kit (axis numbers in
            their own strip, TP / ENTRY / LAST tags in the label strip
            beside it) and the solid LAST line — the current price lives on
-           the chart, not just in the header */
-        drawCandles($("expChart"), explorer.sym, stage.tf, 190, explorer.sym);
+           the chart, not just in the header. recordedOnly: TP and stop
+           draw only when they are levels the payload recorded for a real
+           open position in the searched symbol — never a rule-derived
+           TP or rule stop made up for a token that has none */
+        drawCandles($("expChart"), explorer.sym, stage.tf, 190, explorer.sym, true);
         $("expState").textContent = explorer.sym.replace("USDT", "/USDT") + " · " + TFS.filter(function (t) { return t[0] === stage.tf; })[0][1];
         updateExpHeader();
       }
