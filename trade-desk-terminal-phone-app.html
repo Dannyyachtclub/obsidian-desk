@@ -452,7 +452,7 @@
       .fx-flash-neg { animation: fxFlashNeg 1.15s ease; }
       @keyframes fxFlashNeg { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,109,0), 0 0 0 rgba(255,77,109,0); } 30% { box-shadow: 0 0 0 2px rgba(255,77,109,0.85), 0 0 38px rgba(255,77,109,0.5); } }
       @media (prefers-reduced-motion: reduce) {
-        .ticker-track, .tabbar [data-tab="live"] .glyph, .live-pill[data-state="live"] .live-dot, .why-banner, .fx-flash, .eq span, .prox-row.hot .bar-fill, .gate-step + .gate-step::before, .pip.prog, .win-banner::after, .wb-money span, .picks-fold > summary::after, .tp-pop-go, .tp-mile-go, .pop-chip, .fx-flash-neg { animation: none !important; }
+        .ticker-track, .tabbar [data-tab="live"] .glyph, .live-pill[data-state="live"] .live-dot, .why-banner, .fx-flash, .eq span, .prox-row.hot .bar-fill, .gate-step + .gate-step::before, .pip.prog, .win-banner::after, .wb-money span, .picks-fold > summary::after, .tp-pop-go, .tp-mile-go, .pop-chip, .fx-flash-neg, .feed-line.pop { animation: none !important; }
       }
       /* ---------- ecosystem: one web ---------- */
       .eco-box { border-radius: 10px; overflow: hidden; background: #06030f; border: 1px solid var(--line-soft); position: relative; margin-top: 8px; }
@@ -473,11 +473,20 @@
       .eco-agent .ea-note { color: var(--bone-dim); font-size: 11.5px; overflow-wrap: anywhere; }
       .eco-agent .ea-when { margin-left: auto; flex-shrink: 0; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--dim); }
       /* ---------- live feed stream (the slot under the balance card) ---------- */
-      .feed-stream-box { height: 322px; margin-top: 6px; cursor: grab; overflow: hidden; background: radial-gradient(120% 90% at 50% 38%, #100726 0%, #0a0518 58%, #05020e 100%); }
+      .feed-stream-box { height: 322px; margin-top: 6px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; background: radial-gradient(120% 90% at 50% 38%, #100726 0%, #0a0518 58%, #05020e 100%); scrollbar-width: thin; scrollbar-color: rgba(157,107,255,0.45) transparent; }
+      .feed-stream-box::-webkit-scrollbar { width: 5px; }
+      .feed-stream-box::-webkit-scrollbar-thumb { background: rgba(157,107,255,0.45); border-radius: 3px; }
       @media (max-width: 420px) { .feed-stream-box { height: 300px; } }
-      .feed-stream-box.dragging { cursor: grabbing; }
-      .feed-stream-box.scrollable { overflow-y: auto; cursor: auto; }
-      .feed-stream-track { padding: 7px 8px; will-change: transform; }
+      .feed-stream-track { padding: 7px 8px; }
+      /* POP FEED: each order pops in at the bottom edge — a quick spring
+         in plus a flash tinted by its side (green buy / red sell) — never
+         a slow continuous crawl */
+      .feed-line.pop { animation: feedPopIn 0.35s cubic-bezier(0.21, 1.36, 0.4, 1); }
+      .feed-line.pop.buy { animation: feedPopIn 0.35s cubic-bezier(0.21, 1.36, 0.4, 1), feedTintBuy 1.15s ease-out; }
+      .feed-line.pop.sell { animation: feedPopIn 0.35s cubic-bezier(0.21, 1.36, 0.4, 1), feedTintSell 1.15s ease-out; }
+      @keyframes feedPopIn { 0% { opacity: 0; transform: translateY(7px) scale(0.93); } 100% { opacity: 1; transform: none; } }
+      @keyframes feedTintBuy { 0% { background: rgba(45,255,159,0.30); } 100% { background: transparent; } }
+      @keyframes feedTintSell { 0% { background: rgba(255,77,109,0.30); } 100% { background: transparent; } }
       .feed-line { font-family: "JetBrains Mono", monospace; font-size: 11px; line-height: 1.45; padding: 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bone-dim); border-radius: 4px; cursor: pointer; }
       .feed-line b { color: var(--bone); font-weight: 700; }
       .feed-line .fl-side { font-weight: 800; }
@@ -587,10 +596,12 @@
            under the balance card: one line per real order off the
            payload's event_bus.order_stream — buys in green, sells in
            red, every line printed exactly as recorded (side, token,
-           price, size, desk, UTC clock) — flowing upward in a continuous
-           crawl with the newest order at the bottom edge. Hold the
-           stream and it pauses under the finger; orders the page
-           witnesses live append at the bottom as new lines. The one-web
+           price, size, desk, UTC clock) — popping in one after another
+           at the bottom edge, pop pop pop at the pace of the desks'
+           own activity, each new line flashing in green or red by its
+           side. Hold the stream and the popping pauses under the
+           finger; orders the page witnesses live pop in as they land.
+           The one-web
            agent mesh lives in the Ecosystem tab and its ribbon under
            System Pulse, not here. -->
       <section class="panel" data-live-chrome style="padding:10px 12px; margin-bottom:10px;" aria-label="Live feed — our own desks' orders as a flowing stream of transaction lines, one line per recorded order, buys in green and sells in red">
@@ -3998,14 +4009,16 @@
          payload's event_bus.order_stream (ts_ms, kind, desk, symbol,
          print_side, qty, price — printed exactly as recorded); nothing
          is synthesised and no line exists without a recorded event.
-         The stream is chronological top to bottom and crawls upward at
-         the ticker's readable pace, so the newest order enters at the
-         bottom edge — the edge the stream flows toward — and the list
-         loops seamlessly back to the oldest. Grab it (the established
-         touch-hold) and it stays under the finger to read; let go and
-         it resumes on its own after a short beat. Orders the page
-         witnesses live (feedLivePrint, fed by the same tapeLive path as
-         the tape below the stage) append at the bottom as new lines. */
+         The stream is chronological top to bottom and does NOT crawl:
+         orders POP in one after another at the bottom edge — pop pop
+         pop — each new line springing in with a flash tinted by its
+         side. On load the recent backlog machine-guns in fast until
+         the stream catches up to the newest recorded order; from then
+         on, orders the page witnesses live (feedLivePrint, fed by the
+         same tapeLive path as the tape below the stage) pop in as
+         they land. Hold the stream or scroll up into it and the
+         popping pauses (the backlog waits); back at the bottom edge
+         it resumes. */
       var feedHeadDesk = (P.desks && P.desks.crypto && P.desks.crypto.desk_id) || "TD-001";
       var feedOrders = (function () {
         var out = [];
@@ -4021,9 +4034,9 @@
         out.sort(function (a, b) { return a.ts - b.ts; });
         return out;
       })();
-      function feedLineHtml(p, i) {
+      function feedLineHtml(p, i, pop) {
         var nm = deskName(p.desk);
-        return '<div class="feed-line' + (p.live ? " fresh" : "") + '" data-fi="' + i + '">' +
+        return '<div class="feed-line ' + p.side + (p.live ? " fresh" : "") + (pop ? " pop" : "") + '" data-fi="' + i + '">' +
           '<span class="fl-side ' + p.side + '">' + (p.side === "buy" ? "▲ BUY" : "▼ SELL") + "</span>" +
           " · <b>" + esc(p.symbol || "") + "</b>" +
           (p.price != null ? " @ " + esc(p.price) : "") +
@@ -4050,30 +4063,48 @@
             (nm ? " · " + esc(nm) : "") + " · " + fmtClock(lp.ts);
         }
       }
-      var FS = { built: false, reduced: false, visible: false, y: 0, drag: null, resumeAt: 0, copyH: 0, selected: -1 };
+      /* POP FEED mechanics: FS.shown counts how many recorded orders
+         are on screen; a timer pops the next one (or a burst, when the
+         backlog is deep) in at the bottom edge. The box is a plain
+         scroll box pinned to the bottom while the reader is there —
+         the pin is an instant jump on each pop, never a smooth crawl. */
+      var FS = { built: false, reduced: false, visible: true, shown: 0, lastPop: 0, resumeAt: 0, selected: -1, hold: false, atBottom: true };
       var fsBox = $("feedStreamBox"), fsTrack = $("feedStreamTrack");
+      var FS_KEEP = 170; /* lines kept in the DOM; older ones roll off the top */
       function fsRender() {
         if (!fsTrack) return;
         if (!feedOrders.length) {
           fsTrack.innerHTML = '<div class="feed-line empty">NO DESK ORDERS ON THIS SNAPSHOT YET</div>';
-          FS.copyH = 0;
+          FS.shown = 0;
           return;
         }
-        var html = feedOrders.map(feedLineHtml).join("");
-        fsTrack.innerHTML = html + html; /* two copies: the crawl wraps seamlessly */
-        FS.copyH = fsTrack.scrollHeight / 2;
+        var start = Math.max(0, FS.shown - FS_KEEP), html = "";
+        for (var i = start; i < FS.shown && i < feedOrders.length; i++) html += feedLineHtml(feedOrders[i], i, false);
+        fsTrack.innerHTML = html;
+        fsFollow();
       }
-      function fsPlace() {
-        if (!fsTrack || FS.reduced) return;
-        if (FS.copyH > 0) { while (FS.y < 0) FS.y += FS.copyH; FS.y = FS.y % FS.copyH; }
-        fsTrack.style.transform = "translateY(" + (-FS.y) + "px)";
+      function fsFollow() {
+        if (fsBox && FS.atBottom) fsBox.scrollTop = fsBox.scrollHeight;
       }
-      function fsAnchorNewest() {
-        /* park the crawl so the newest order sits at the bottom edge */
-        if (!fsBox || !fsTrack) return;
-        var m = FS.copyH - fsBox.clientHeight;
-        FS.y = m > 0 ? m : 0;
-        fsPlace();
+      function fsPop() {
+        if (!fsTrack || FS.shown >= feedOrders.length) return;
+        var ph = fsTrack.querySelector(".feed-line.empty");
+        if (ph) ph.remove();
+        var backlog = feedOrders.length - FS.shown;
+        var n = backlog > 50 ? 3 : backlog > 20 ? 2 : 1, html = "";
+        for (var k = 0; k < n && FS.shown < feedOrders.length; k++, FS.shown++) {
+          html += feedLineHtml(feedOrders[FS.shown], FS.shown, true);
+        }
+        fsTrack.insertAdjacentHTML("beforeend", html);
+        while (fsTrack.children.length > FS_KEEP) fsTrack.removeChild(fsTrack.firstElementChild);
+        fsFollow();
+      }
+      function fsInterval() {
+        var backlog = feedOrders.length - FS.shown;
+        if (backlog > 50) return 110;
+        if (backlog > 20) return 200;
+        if (backlog > 6) return 380;
+        return 640;
       }
       function fsSelect(i) {
         FS.selected = (i != null && feedOrders[i]) ? i : -1;
@@ -4098,17 +4129,22 @@
         var px = evPriceOf(ev, ev.reason || ""), sz = evSizeOf(ev);
         feedOrders.push({ ts: ts, desk: ev.desk || feedHeadDesk, symbol: ev.symbol || "", kind: ev.kind || "",
           side: side, price: px != null ? fmtPrice(px) : null, qty: sz != null ? String(sz) : null, live: true });
-        if (feedOrders.length > 400) feedOrders.splice(0, feedOrders.length - 400);
+        var trimmed = false;
+        if (feedOrders.length > 400) { feedOrders.splice(0, feedOrders.length - 400); trimmed = true; }
         feedUpdateText();
-        fsRender();
-        if (FS.reduced) { if (fsBox) fsBox.scrollTop = fsBox.scrollHeight; }
-        else fsAnchorNewest();
+        if (trimmed || FS.reduced) {
+          FS.shown = feedOrders.length;
+          fsRender();
+          if (fsBox) fsBox.scrollTop = fsBox.scrollHeight;
+        } else {
+          FS.lastPop = 0; /* witnessed live: pop it in on the next frame, no queueing behind the backlog */
+        }
         fsSelect(feedOrders.length - 1);
       }
       function fsLoop() {
-        if (fsTrack && FS.copyH > 0 && !document.hidden && FS.visible && !FS.drag && !FS.reduced && Date.now() >= FS.resumeAt) {
-          FS.y += 0.45; /* ≈27px/s — the ticker's readable crawl */
-          fsPlace();
+        if (fsTrack && !document.hidden && FS.visible && !FS.reduced && !FS.hold && FS.atBottom && Date.now() >= FS.resumeAt) {
+          var now = Date.now();
+          if (now - FS.lastPop >= fsInterval()) { FS.lastPop = now; fsPop(); }
         }
         requestAnimationFrame(fsLoop);
       }
@@ -4117,61 +4153,46 @@
         FS.built = true;
         FS.reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
         feedUpdateText();
-        fsRender();
         if (FS.reduced) {
-          fsBox.classList.add("scrollable");
+          FS.shown = feedOrders.length;
+          fsRender();
           fsBox.scrollTop = fsBox.scrollHeight;
         } else {
-          fsAnchorNewest();
+          /* start a screenful-plus back so the recent backlog pops in
+             pop-pop-pop until the stream catches up to the newest
+             recorded order, then settles to the live pace */
+          FS.shown = Math.max(0, feedOrders.length - 70);
+          fsRender();
+          fsBox.scrollTop = fsBox.scrollHeight;
         }
         if (feedOrders.length) fsSelect(feedOrders.length - 1);
-        var dragMoved = false;
-        fsBox.addEventListener("pointerdown", function (e) {
-          if (FS.reduced) return;
-          FS.drag = { y: e.clientY, base: FS.y };
-          dragMoved = false;
-          fsBox.classList.add("dragging");
-          try { fsBox.setPointerCapture(e.pointerId); } catch (err) {}
-        });
-        fsBox.addEventListener("pointermove", function (e) {
-          if (!FS.drag) return;
-          var dy = FS.drag.y - e.clientY;
-          if (Math.abs(dy) > 4) dragMoved = true;
-          FS.y = FS.drag.base + dy;
-          fsPlace();
-        });
-        function endDrag(e) {
-          if (!FS.drag) return;
-          FS.drag = null;
-          fsBox.classList.remove("dragging");
-          FS.resumeAt = Date.now() + 1600;
-          if (!dragMoved && e && e.type === "pointerup" && feedOrders.length) {
-            var t = e.target && e.target.closest ? e.target.closest(".feed-line") : null;
-            if (t && t.getAttribute("data-fi") != null) {
-              var idx = parseInt(t.getAttribute("data-fi"), 10) % feedOrders.length;
-              fsSelect(idx === FS.selected ? -1 : idx);
-            }
+        fsBox.addEventListener("scroll", function () {
+          FS.atBottom = fsBox.scrollTop + fsBox.clientHeight >= fsBox.scrollHeight - 36;
+        }, { passive: true });
+        /* a finger held on the stream pauses the popping until it lifts */
+        fsBox.addEventListener("pointerdown", function () { FS.hold = true; });
+        function endHold() { if (FS.hold) { FS.hold = false; FS.resumeAt = Date.now() + 900; } }
+        fsBox.addEventListener("pointerup", endHold);
+        fsBox.addEventListener("pointercancel", endHold);
+        fsBox.addEventListener("click", function (e) {
+          if (!feedOrders.length) return;
+          var t = e.target && e.target.closest ? e.target.closest(".feed-line") : null;
+          if (t && t.getAttribute("data-fi") != null) {
+            var idx = parseInt(t.getAttribute("data-fi"), 10);
+            if (feedOrders[idx]) fsSelect(idx === FS.selected ? -1 : idx);
           }
-        }
-        fsBox.addEventListener("pointerup", endDrag);
-        fsBox.addEventListener("pointercancel", endDrag);
+        });
         if ("IntersectionObserver" in window) {
           new IntersectionObserver(function (entries) {
             entries.forEach(function (en) { FS.visible = en.isIntersecting; });
           }, { threshold: 0.04 }).observe(fsBox);
         } else FS.visible = true;
-        var rzT = null;
-        window.addEventListener("resize", function () {
-          if (rzT) clearTimeout(rzT);
-          rzT = setTimeout(function () { FS.copyH = fsTrack ? fsTrack.scrollHeight / 2 : 0; fsPlace(); }, 160);
-        });
         requestAnimationFrame(fsLoop);
       }
       function fmRepaint() {
         if (!FS.built) return;
         fsRender();
-        if (FS.reduced) { if (fsBox) fsBox.scrollTop = fsBox.scrollHeight; }
-        else if (!FS.drag) fsPlace();
+        if (FS.reduced && fsBox) fsBox.scrollTop = fsBox.scrollHeight;
       }
       fsInit();
 
